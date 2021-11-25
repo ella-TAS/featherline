@@ -1,0 +1,35 @@
+private IEnumerator StarFlyCoroutine() {
+	Vector2 vector = Input.Feather.Value;
+	if (vector == Vector2.Zero) {
+		vector = Vector2.UnitX * (float)Facing;
+	}
+	Speed = vector * 250f;
+	starFlyLastDir = vector;
+}
+
+private int StarFlyUpdate() {
+	Vector2 value = Input.Feather.Value;
+	bool flag = false;
+	if (value == Vector2.Zero) {
+		flag = true;
+		value = starFlyLastDir;
+	}
+	Vector2 vector = Speed.SafeNormalize(Vector2.Zero);
+	vector = (starFlyLastDir = ((!(vector == Vector2.Zero)) ? vector.RotateTowards(value.Angle(), 5.58505344f * Engine.DeltaTime) : value));
+	float target;
+	if (flag) {
+		starFlySpeedLerp = 0f;
+		target = 91f;
+	}
+	else if (vector != Vector2.Zero && Vector2.Dot(vector, value) >= 0.45f) {
+		starFlySpeedLerp = Calc.Approach(starFlySpeedLerp, 1f, Engine.DeltaTime / 1f);
+		target = MathHelper.Lerp(140f, 190f, starFlySpeedLerp);
+	}
+	else {
+		starFlySpeedLerp = 0f;
+		target = 140f;
+	}
+	float val = Speed.Length();
+	val = Calc.Approach(val, target, 1000f * Engine.DeltaTime);
+	Speed = vector * val;
+}

@@ -8,28 +8,31 @@ def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty
     s = Sim()
     s.position = Vector2(posx, posy)
     if boostx != 0 or boosty != 0:
-        s.input_ = Vector2(boostx, boosty)
+        s.aim = Vector2(boostx, boosty)
         feather_update(s)
+        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
+        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
+    return s.position.x, s.position.y, s.speed.x, s.speed.y
 
 
 def main():
     # enter feather here
-    sim = Sim()
-    sim.position = Vector2(91, 276)
+    s = Sim()
+    s.position = Vector2(91, 276)
 
     for frame in range(27 + 6 + 8):
         if frame < 27:
-            sim.aim = Vector2(-1, -1)  # featherboost upleft
+            s.aim = Vector2(-1, -1)  # featherboost upleft
         elif frame < 27 + 6:
-            sim.aim = vector_from_tas_angle(340, 1)  # hold 340 for 6f
+            s.aim = vector_from_tas_angle(340, 1)  # hold 340 for 6f
         else:
-            sim.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
+            s.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
 
-        feather_update(sim)
-        print(f"{str(sim.speed):>20}\t{str(sim.position):>20}\t{sim.aim.tas_angle():>10.4f}")
+        feather_update(s)
+        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
 
 
 class Vector2:

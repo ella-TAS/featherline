@@ -8,24 +8,26 @@ def sim(pos: (float, float), inputs: list[float], precise: bool, squareboost: bo
     s = Sim()
     x, y = pos
     s.position = Vector2(x, y)
+
     for i in inputs:
-        s.input_ = vector_from_tas_angle(i, 1)
+        s.aim = vector_from_tas_angle(i, 1)
 
 
 def main():
     # enter feather here
-    s = Sim()
-    s.position = Vector2(91, 276)
+    sim = Sim()
+    sim.position = Vector2(91, 276)
 
     for frame in range(27 + 6 + 8):
         if frame < 27:
-            s.input_ = Vector2(-1, -1)  # featherboost upleft
+            sim.aim = Vector2(-1, -1)  # featherboost upleft
         elif frame < 27 + 6:
-            s.input_ = vector_from_tas_angle(340, 1)  # hold 340 for 6f
+            sim.aim = vector_from_tas_angle(340, 1)  # hold 340 for 6f
         else:
-            s.input_ = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
+            sim.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
 
-        feather_update(s)
+        feather_update(sim)
+        print(f"{sim.speed}\t{sim.position}\t{sim.aim.tas_angle():.4f}")
 
 
 class Vector2:
@@ -34,16 +36,16 @@ class Vector2:
         self.y = y
 
     def __str__(self):
-        return f"({round(self.x, 3)}, {round(self.y, 3)})"
+        return f"({self.x:.3f}, {self.y:.3f})"
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
 
     def __add__(self, other):
         return Vector2(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
         return Vector2(self.x - other.x, self.y - other.y)
-
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
 
     def __mul__(self, other: float):
         return Vector2(self.x * other, self.y * other)
@@ -86,7 +88,7 @@ class Vector2:
 class Sim:
     def __init__(self):
         self.position: Union[Vector2, None] = None
-        self.input_: Union[Vector2, None] = None
+        self.aim: Union[Vector2, None] = None
         self.speed: Vector2 = Vector2.zero()
         self.frame_num: int = 0
         self.star_fly_speed_lerp: float = 0
@@ -164,40 +166,36 @@ def dot(value1: Vector2, value2: Vector2) -> float:
 def feather_update(sim: Sim):
     if sim.frame_num == 0:
         # then 1 frame of featherboost from StarFlyCoroutine() method
-        sim.speed = sim.input_ * 250
+        sim.speed = sim.aim * 250
     else:
         # then normal feather movement from StarFlyUpdate()
         feather_movement(sim)
 
     sim.frame_num += 1
-    sim.position.translate(sim.speed * DELTA_TIME)
-    print(f"{sim.speed}\t{sim.position}\t{round(sim.input_.tas_angle(), 4)}\n")
 
 
 # refactored StarFlyUpdate()
 def feather_movement(sim: Sim):
-    value = sim.input_
-
-    if value == Vector2.zero():  # don't go neutral (lazy to implement the neutral input code)
+    if sim.aim == Vector2.zero():  # don't go neutral (lazy to implement the neutral input code)
         raise SystemError
     if sim.speed == Vector2.zero():  # why would this ever happen
         raise SystemError
 
-    vector = sim.speed.normalize_and_copy()
-    vector = rotate_towards(vector, value.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
+    current_dir = sim.speed.normalize_and_copy()
+    current_dir = rotate_towards(current_dir, sim.aim.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
 
     # curving and speed acceleration
-    if vector != Vector2.zero() and dot(vector, value) >= 0.45:  # angle after rotating < acos(.45)
+    if current_dir != Vector2.zero() and dot(current_dir, sim.aim) >= 0.45:  # angle after rotating < acos(.45)
         sim.star_fly_speed_lerp = approach(sim.star_fly_speed_lerp, 1, DELTA_TIME)
-        target = lerp(140, 190, sim.star_fly_speed_lerp)
+        max_speed = lerp(140, 190, sim.star_fly_speed_lerp)
     else:  # don't go here
         sim.star_fly_speed_lerp = 0
-        target = 140  # approach 140 speed
+        max_speed = 140  # approach 140 speed
 
     # update speed
     num = sim.speed.length()
-    num = approach(num, target, 1000 * DELTA_TIME)
-    sim.speed = vector * num
+    num = approach(num, max_speed, 1000 * DELTA_TIME)
+    sim.speed = current_dir * num
 
 
 DELTA_TIME = 0.0166667

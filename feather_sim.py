@@ -27,7 +27,7 @@ def main():
             sim.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
 
         feather_update(sim)
-        print(f"{sim.speed}\t{sim.position}\t{sim.aim.tas_angle():.4f}")
+        print(f"{str(sim.speed):>20}\t{str(sim.position):>20}\t{sim.aim.tas_angle():>10.4f}")
 
 
 class Vector2:

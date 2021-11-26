@@ -6,21 +6,13 @@ from typing import Union
 def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0) -> (
         float, float, float, float, bool):
     s = Sim()
-<<<<<<< Updated upstream
-    x, y = pos
-    s.position = Vector2(x, y)
-
-    for i in inputs:
-        s.aim = vector_from_tas_angle(i, 1)
-=======
     s.position = Vector2(posx, posy)
     if boostx != 0 or boosty != 0:
         s.input_ = Vector2(boostx, boosty)
         feather_update(s)
     for i in inputs:
-        s.input_ = vector_from_tas_angle(i, 1)
+        s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
->>>>>>> Stashed changes
 
 
 def main():

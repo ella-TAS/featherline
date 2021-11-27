@@ -3,7 +3,7 @@ import math
 from typing import Optional
 
 
-def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0) -> (float, float, float, float, bool):
+def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0):
     s = Sim()
     s.position = Vector2(posx, posy)
 
@@ -15,26 +15,17 @@ def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
-        print(s)
-
+        if s.frame_num == 13:
+            print("hi")
+        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
     return s.position.x, s.position.y, s.speed.x, s.speed.y
 
 
 def main():
-    # enter feather here
-    s = Sim()
-    s.position = Vector2(91, 276)
-
-    for frame in range(27 + 6 + 8):
-        if frame < 27:
-            s.aim = Vector2(-1, -1)  # featherboost upleft
-        elif frame < 27 + 6:
-            s.aim = vector_from_tas_angle(340, 1)  # hold 340 for 6f
-        else:
-            s.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
-
-        feather_update(s)
-        print(s)
+    print(sim(28565.1975392997, -8006.802460700270,
+              [220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220.,
+               220., 220., 220., 220., 220., 220., 220.],
+              -1, -1))
 
 
 class Vector2:
@@ -173,40 +164,40 @@ def dot(value1: Vector2, value2: Vector2) -> float:
     return value1.x * value2.x + value1.x * value2.y
 
 
-def feather_update(sim: Sim):
-    if sim.frame_num == 0:
+def feather_update(si: Sim):
+    if si.frame_num == 0:
         # then 1 frame of featherboost from StarFlyCoroutine() method
-        sim.speed = sim.aim * 250
+        si.speed = si.aim * 250
     else:
         # then normal feather movement from StarFlyUpdate()
-        feather_movement(sim)
+        feather_movement(si)
 
-    sim.frame_num += 1
-    sim.position.translate(sim.speed * DELTA_TIME)
+    si.frame_num += 1
+    si.position.translate(si.speed * DELTA_TIME)
 
 
 # refactored StarFlyUpdate()
-def feather_movement(sim: Sim):
-    if sim.aim == Vector2.zero():  # don't go neutral (lazy to implement the neutral input code)
+def feather_movement(si: Sim):
+    if si.aim == Vector2.zero():  # don't go neutral (lazy to implement the neutral input code)
         raise SystemError
-    if sim.speed == Vector2.zero():  # why would this ever happen
+    if si.speed == Vector2.zero():  # why would this ever happen
         raise SystemError
 
-    current_dir = sim.speed.normalize_and_copy()
-    current_dir = rotate_towards(current_dir, sim.aim.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
+    current_dir = si.speed.normalize_and_copy()
+    current_dir = rotate_towards(current_dir, si.aim.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
 
     # curving and speed acceleration
-    if current_dir != Vector2.zero() and dot(current_dir, sim.aim) >= 0.45:  # angle after rotating < acos(.45)
-        sim.star_fly_speed_lerp = approach(sim.star_fly_speed_lerp, 1, DELTA_TIME)
-        max_speed = lerp(140, 190, sim.star_fly_speed_lerp)
+    if current_dir != Vector2.zero() and dot(current_dir, si.aim) >= 0.45:  # angle after rotating < acos(.45)
+        si.star_fly_speed_lerp = approach(si.star_fly_speed_lerp, 1, DELTA_TIME)
+        max_speed = lerp(140, 190, si.star_fly_speed_lerp)
     else:  # don't go here
-        sim.star_fly_speed_lerp = 0
+        si.star_fly_speed_lerp = 0
         max_speed = 140  # approach 140 speed
 
     # update speed
-    num = sim.speed.length()
+    num = si.speed.length()
     num = approach(num, max_speed, 1000 * DELTA_TIME)
-    sim.speed = current_dir * num
+    si.speed = current_dir * num
 
 
 DELTA_TIME = 0.0166667

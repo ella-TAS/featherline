@@ -1,4 +1,3 @@
-
 public class feather {
 	public static void main(String[] args) {
 		new feather();
@@ -103,17 +102,18 @@ public class feather {
 
 	feather() {
 		// enter feather here
-		sim.Position = new Vector2(91, 276);
-		sim.Speed = new Vector2(0f, -240f);
+		sim.Position = new Vector2(28565.1975392997f, -8006.802460700270f);
+		sim.Speed = new Vector2(0f, 0f);
 
-		for (int frame = 0; frame < 27 + 6 + 8; frame++) {
-			if (frame < 27)
+		for (int frame = 0; frame < 21; frame++) {
+			if (frame == 0)
 				sim.input = new Vector2(-1, -1); // featherboost upleft
-			else if (frame < 27 + 6)
-				sim.input = Vector2.fromTASAngle(340, 1); // hold 340 for 6f
 			else
-				sim.input = Vector2.fromTASAngle(210, 1); // then hold 210 for 8f
+				sim.input = Vector2.fromTASAngle(220, 1); // hold 340 for 6f
 			FeatherUpdate(sim);
+			// debugging
+			if (frame == 13)
+				System.out.println("hi");
 		}
 
 		return;
@@ -172,10 +172,7 @@ public class feather {
 	}
 
 	void FeatherUpdate(Sim sim) {
-		if (sim.frameNum < 26)
-			// 26 frames of transforming (StarFlyUpdate)
-			sim.Speed = Approach(sim.Speed, Vector2.Zero, 1000f * DeltaTime);
-		else if (sim.frameNum == 26)
+		if (sim.frameNum == 0)
 			// then 1 frame of featherboost from StarFlyCoroutine() method
 			sim.Speed = sim.input.multiply(250);
 		else {

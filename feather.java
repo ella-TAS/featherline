@@ -111,9 +111,6 @@ public class feather {
 			else
 				sim.input = Vector2.fromTASAngle(220, 1); // hold 340 for 6f
 			FeatherUpdate(sim);
-			// debugging
-			if (frame == 13)
-				System.out.println("hi");
 		}
 
 		return;
@@ -208,6 +205,8 @@ public class feather {
 		}
 
 		// update speed
+		if(sim.frameNum == 13) 
+			System.out.println("hi");
 		float num = sim.Speed.Length();
 		num = Approach(num, target, 1000f * DeltaTime);
 		sim.Speed = vector.multiply(num);

@@ -1,4 +1,5 @@
 # tntfalle, 16.11.2021
+# Kataiser, cake
 
 import math
 import random

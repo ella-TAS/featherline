@@ -15,8 +15,6 @@ def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
-        if s.frame_num == 13:
-            print("hi")
         print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
     return s.position.x, s.position.y, s.speed.x, s.speed.y
 
@@ -185,6 +183,10 @@ def feather_movement(si: Sim):
 
     current_dir = si.speed.normalize_and_copy()
     current_dir = rotate_towards(current_dir, si.aim.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
+
+    # debug
+    if si.frame_num == 13:
+        print("debug from here")
 
     # curving and speed acceleration
     if current_dir != Vector2.zero() and dot(current_dir, si.aim) >= 0.45:  # angle after rotating < acos(.45)

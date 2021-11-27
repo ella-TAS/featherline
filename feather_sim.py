@@ -3,27 +3,35 @@ import math
 from typing import Optional
 
 
-def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0):
+def sim(posx: float, posy: float, inputs: list[float], spinners: list[list[float, float]],
+        boostx: float = 0, boosty: float = 0) -> (float, float, float, float, bool):
     s = Sim()
     s.position = Vector2(posx, posy)
 
     if boostx != 0 or boosty != 0:
         s.aim = Vector2(boostx, boosty)
         feather_update(s)
-        print(s)
+        if spinner_collision(s, spinners):
+            return s.position.x, s.position.y, s.speed.x, s.speed.y, True
+        # print(s)
 
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
-        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
-    return s.position.x, s.position.y, s.speed.x, s.speed.y
+        if spinner_collision(s, spinners):
+            return s.position.x, s.position.y, s.speed.x, s.speed.y, True
+        # print(s)
+
+    return s.position.x, s.position.y, s.speed.x, s.speed.y, False
 
 
 def main():
     print(sim(28565.1975392997, -8006.802460700270,
               [220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220.,
-               220., 220., 220., 220., 220., 220., 220.],
-              -1, -1))
+               220., 220., 220., 220., 220., 220., 220.], [(5, 6)], -1, -1))
+    print(sim(28565.1975392997, -8006.802460700270,
+              [300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300.,
+               300., 300., 300., 300., 300., 300., 300.], [(7, 9)]))
 
 
 class Vector2:
@@ -159,7 +167,7 @@ def vector_from_tas_angle(angle_degrees: float, length: float) -> Vector2:
 
 
 def dot(value1: Vector2, value2: Vector2) -> float:
-    return value1.x * value2.x + value1.x * value2.y
+    return value1.x * value2.x + value1.y * value2.y
 
 
 def feather_update(si: Sim):
@@ -184,10 +192,6 @@ def feather_movement(si: Sim):
     current_dir = si.speed.normalize_and_copy()
     current_dir = rotate_towards(current_dir, si.aim.angle(), 5.5850534 * DELTA_TIME)  # 5.33334 degrees
 
-    # debug
-    if si.frame_num == 13:
-        print("debug from here")
-
     # curving and speed acceleration
     if current_dir != Vector2.zero() and dot(current_dir, si.aim) >= 0.45:  # angle after rotating < acos(.45)
         si.star_fly_speed_lerp = approach(si.star_fly_speed_lerp, 1, DELTA_TIME)
@@ -200,6 +204,17 @@ def feather_movement(si: Sim):
     num = si.speed.length()
     num = approach(num, max_speed, 1000 * DELTA_TIME)
     si.speed = current_dir * num
+
+
+def spinner_collision(si: Sim, spinners: list[(int, int)]) -> bool:
+    for s in spinners:
+        if (si.position.x - s[0]) ** 2 + (si.position.y + 6 - s[1]) ** 2 < 141:
+            if (s[0] - 10.5 < si.position.y < s[1] + 10.5 and s[1] + 0.5 < si.position.x < s[1] + 9.5) or (
+                    s[0] - 8.5 < si.position.y < s[1] + 8.5 and s[1] - 0.5 < si.position.x < s[1] + 12.5) or (
+                    s[0] - 7.5 < si.position.y < s[1] + 7.5 and s[1] - 1.5 < si.position.x < s[1] + 13.5) or (
+                    s[0] - 6.5 < si.position.y < s[1] + 6.5 and s[1] - 2.5 < si.position.x < s[1] + 14.5):
+                return True
+    return False
 
 
 DELTA_TIME = 0.0166667

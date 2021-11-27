@@ -1,20 +1,22 @@
 import functools
 import math
-from typing import Union
+from typing import Optional
 
 
-def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0) -> (
-        float, float, float, float, bool):
+def sim(posx: float, posy: float, inputs: list[float], boostx: float = 0, boosty: float = 0) -> (float, float, float, float, bool):
     s = Sim()
     s.position = Vector2(posx, posy)
+
     if boostx != 0 or boosty != 0:
         s.aim = Vector2(boostx, boosty)
         feather_update(s)
-        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
+        print(s)
+
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
-        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
+        print(s)
+
     return s.position.x, s.position.y, s.speed.x, s.speed.y
 
 
@@ -32,7 +34,7 @@ def main():
             s.aim = vector_from_tas_angle(210, 1)  # then hold 210 for 8f
 
         feather_update(s)
-        print(f"{str(s.speed):>20}\t{str(s.position):>20}\t{s.aim.tas_angle():>10.4f}")
+        print(s)
 
 
 class Vector2:
@@ -40,10 +42,10 @@ class Vector2:
         self.x = x
         self.y = y
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"({self.x:.3f}, {self.y:.3f})"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
 
     def __add__(self, other):
@@ -92,11 +94,14 @@ class Vector2:
 
 class Sim:
     def __init__(self):
-        self.position: Union[Vector2, None] = None
-        self.aim: Union[Vector2, None] = None
+        self.position: Optional[Vector2] = None
+        self.aim: Optional[Vector2] = None
         self.speed: Vector2 = Vector2.zero()
         self.frame_num: int = 0
         self.star_fly_speed_lerp: float = 0
+
+    def __str__(self) -> str:
+        return f"{str(self.speed):<25}\t{str(self.position):<25}\t{self.aim.tas_angle():.4f}"
 
 
 # linearly interpolates between two values
@@ -177,6 +182,7 @@ def feather_update(sim: Sim):
         feather_movement(sim)
 
     sim.frame_num += 1
+    sim.position.translate(sim.speed * DELTA_TIME)
 
 
 # refactored StarFlyUpdate()

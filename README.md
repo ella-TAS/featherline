@@ -1,5 +1,5 @@
 # featherline
-generic algorithm for analog feather movement in Celeste
+genetic algorithm for analog feather movement in Celeste
 
 
 created by tntfalle, Kataiser, cake

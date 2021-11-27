@@ -29,13 +29,17 @@ def fitness(s: dict[str, any], data: (int, int, bool)) -> float:
     posx, posy, speedx, speedy, dead = data
 
     if s["axis"] == "x":
-        return (posx if s["prim_dir"] == "+" else -posx) - (0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"]) else
-                                                            s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"]))) - (100000 if dead else 0)
+        return fitness_axis(s, posx, posy, dead)
     elif s["axis"] == "y":
-        return (posy if s["prim_dir"] == "+" else -posy) - (0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"]) else
-                                                            s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"]))) - (100000 if dead else 0)
+        return fitness_axis(s, posy, posx, dead)
     else:
         return 100000 - math.hypot(s["goal_x"] - posx, s["goal_y"] - posy) - (100000 if dead else 0)
+
+
+def fitness_axis(s: dict[str, any], posx: float, posy: float, dead: bool):
+    return (posx if s["prim_dir"] == "+" else -posx) - (100000 if dead else 0) - (
+        0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
+        else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
 
 
 def simulate_population(s: dict[str, any], p: list[list[list[float]]]) -> list[list[list[float], int]]:

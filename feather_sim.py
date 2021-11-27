@@ -182,6 +182,7 @@ def feather_update(sim: Sim):
         feather_movement(sim)
 
     sim.frame_num += 1
+    sim.position.translate(sim.speed * DELTA_TIME)
 
 
 # refactored StarFlyUpdate()

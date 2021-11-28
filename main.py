@@ -12,35 +12,43 @@ from feather_sim import sim
 def main():
     s = load_settings()
     s = format_settings(s)
-    ga = pyeasyga.GeneticAlgorithm(s,
-                                   population_size=5,
-                                   generations=5,
-                                   mutation_probability=1,
-                                   crossover_probability=1)
+
+    s["spinners"] = []
+    if s["spinner_file"] != "":
+        check_file(s["spinner_file"])
+        s["spinners"] = import_spinners(s["spinner_file"])
+
+    ga = pyeasyga.GeneticAlgorithm(s, s["population"], s["generations"], s["mutation_probability"],
+                                   s["crossover_probability"], s["elitism"])
     ga.fitness_function = fitness
     ga.create_individual = create_individual
     ga.crossover_function = crossover
     ga.mutate_function = mutate
+    print("Starting Genetic Algorithm\n\n")
     ga.run()
+
+    print("Last generation:\n")
+    for individual in ga.last_generation():
+        print(individual)
+
+    print("\n\nBest individual:\n")
+    print(ga.best_individual())
 
 
 # change this to get better results (cateline)
-def fitness(individual: list[float], data: dict[str, any]) -> float:
-    print(individual)
-    print()
-    return random.randint(0, 10000)
-
-
-#    if s["axis"] == "x":
-#        return (posx if s["prim_dir"] else -posx) - (100000 if dead else 0) - (
-#            0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
-#            else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
-#    elif s["axis"] == "y":
-#        return (posy if s["prim_dir"] else -posy) - (100000 if dead else 0) - (
-#            0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"])
-#            else s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"])))
-#    else:
-#        return 100000 - (s["goal_x"] - posx)**2 + (s["goal_y"] - posy)**2 - (100000 if dead else 0)
+def fitness(individual: list[float], s: dict[str, any]) -> float:
+    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killbox"],
+                                           s["boost_x"], s["boost_y"])
+    if s["axis"] == "x":
+        return (posx if s["prim_dir"] else -posx) - (100000 if dead else 0) - (
+            0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
+            else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
+    elif s["axis"] == "y":
+        return (posy if s["prim_dir"] else -posy) - (100000 if dead else 0) - (
+            0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"])
+            else s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"])))
+    else:
+        return 100000 - (s["goal_x"] - posx) ** 2 + (s["goal_y"] - posy) ** 2 - (100000 if dead else 0)
 
 
 def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
@@ -80,6 +88,7 @@ def create_individual(s: dict[str, any]) -> list[float]:
 
 
 def format_settings(s: dict[str, any]) -> dict[str, any]:
+    s["spinner_file"] = s["spinner_file"].strip("\n").strip()
     if s["favorite"].strip("\n").strip() == "":
         s["favorite"] = []
     else:
@@ -112,12 +121,21 @@ def load_settings() -> dict[str, any]:
         with open("config.yaml", "r") as config_file:
             settings = yaml.safe_load(config_file)
 
+        # check for correct keys/values
         settings["favorite"] = str(settings["favorite"])
         settings["goal"] = str(settings["goal"])
         settings["spinner_file"] = str(settings["spinner_file"])
         settings["dna_length"] = int(settings["dna_length"])
         settings["population"] = int(settings["population"])
+        settings["generations"] = int(settings["generations"])
         settings["prim_dir"] = bool(int(settings["prim_dir"]))
+        settings["elitism"] = bool(int(settings["elitism"]))
+        settings["pos_x"] = float(settings["pos_x"])
+        settings["pos_y"] = float(settings["pos_y"])
+        settings["boost_x"] = float(settings["boost_x"])
+        settings["boost_y"] = float(settings["boost_y"])
+        settings["crossover_probability"] = float(settings["crossover_probability"])
+        settings["mutation_probability"] = float(settings["mutation_probability"])
         settings["sec_min"] = float(settings["sec_min"])
         settings["sec_max"] = float(settings["sec_max"])
         settings["sec_factor"] = float(settings["sec_factor"])
@@ -149,7 +167,7 @@ def check_file(path: str):
 
 def import_spinners(path: str) -> list[(int, int)]:
     from re import findall
-    with open("path", "r") as file:
+    with open(path, "r") as file:
         gameinfo = file.read()
     matches = findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
     return [(round(float(m[0])), round(float(m[1]))) for m in matches]

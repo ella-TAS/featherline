@@ -1,105 +1,82 @@
 # tntfalle, 16.11.2021
-# Kataiser, cake
-
-import math
+# Kataiser, cake, TheRoboMan
 import random
-import time
+from random import randint
 
-import requests
 import yaml
+from pyeasyga import pyeasyga
+
+from feather_sim import sim
 
 
 def main():
-    check_connection()
     s = load_settings()
     s = format_settings(s)
-    check_file(s["tas_file"])
-    p = create_population(s)
-    # schleife
-    p = simulate_population(s, p)
-
-    for i in p:
-        print(i)
-        print("\n\n\n")
-
-    input(">>>>>>>>>>>>>>>>>>>>>")
+    ga = pyeasyga.GeneticAlgorithm(s,
+                                   population_size=5,
+                                   generations=5,
+                                   mutation_probability=1,
+                                   crossover_probability=1)
+    ga.fitness_function = fitness
+    ga.create_individual = create_individual
+    ga.crossover_function = crossover
+    ga.mutate_function = mutate
+    ga.run()
 
 
 # change this to get better results (cateline)
-def fitness(s: dict[str, any], data: (int, int, bool)) -> float:
-    posx, posy, speedx, speedy, dead = data
+def fitness(individual: list[float], data: dict[str, any]) -> float:
+    print(individual)
+    print()
+    return random.randint(0, 10000)
 
-    if s["axis"] == "x":
-        return fitness_axis(s, posx, posy, dead)
-    elif s["axis"] == "y":
-        return fitness_axis(s, posy, posx, dead)
+
+#    if s["axis"] == "x":
+#        return (posx if s["prim_dir"] else -posx) - (100000 if dead else 0) - (
+#            0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
+#            else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
+#    elif s["axis"] == "y":
+#        return (posy if s["prim_dir"] else -posy) - (100000 if dead else 0) - (
+#            0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"])
+#            else s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"])))
+#    else:
+#        return 100000 - (s["goal_x"] - posx)**2 + (s["goal_y"] - posy)**2 - (100000 if dead else 0)
+
+
+def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
+    if random.random() < 0.5:
+        # exchange parts
+        index = random.randrange(1, len(parent_1))
+        child_1 = parent_1[:index] + parent_2[index:]
+        child_2 = parent_2[:index] + parent_1[index:]
     else:
-        return 100000 - math.hypot(s["goal_x"] - posx, s["goal_y"] - posy) - (100000 if dead else 0)
+        # exchange every other value
+        child_1, child_2 = parent_1, parent_2
+        for i in range(0, len(parent_1), 2):
+            child_1[i], child_2[i] = child_2[i], child_1[i]
+    return child_1, child_2
 
 
-def fitness_axis(s: dict[str, any], posx: float, posy: float, dead: bool):
-    return (posx if s["prim_dir"] == "+" else -posx) - (100000 if dead else 0) - (
-        0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
-        else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
+def mutate(individual: list[float]):
+    # change multiple values
+    length = random.randrange(int(len(individual) / 2))
+    x = random.randrange(len(individual) - length)
+    increment = random.randint(-4000, 4000) / 1000
+    for i in range(x, x + length):
+        individual[i] = round(individual[i] + increment, 3)
+
+    # change a single value (for more precise optimisation) (rounding missing)
+    # individual[random.randrange(len(individual))] += random.randint(-4000, 4000) / 1000
+
+    # simplify (bias towards shorter inputs)
+    # length = random.randrange(int(len(individual) / 4))
+    # start = random.randint(1, len(individual) - length)
+    # for i in range(start, start + length):
+    #     individual[i] = round(individual[start - 1], 3)
 
 
-def simulate_population(s: dict[str, any], p: list[list[list[float]]]) -> list[list[list[float], int]]:
-    for i in p:
-        i.append(fitness(s, play_tas(s, i[0])))
-
-    p.sort(key=take_second, reverse=True)
-    return p
-
-
-def mutate(strength: float, inputs: list[float]):
-    pass
-
-
-def create_population(s: dict[str, any]) -> list[list[float]]:
-    p = []
-
-    for i in range(s["population"]):
-        p.append([random_perm(s["dna_length"])])
-
-    if len(s["favorite"]) != 0:
-        p[-1] = [s["favorite"]]
-
-    return p
-
-
-def random_perm(length: int) -> list[float]:
-    perm = []
-
-    for i in range(length):
-        perm.append(random.randint(0, 35999) / 100)
-
-    return perm
-
-
-def play_tas(s: dict[str, any], t: list[float]) -> (float, float):
-    inputs = [s["header"]]
-
-    for i in t:
-        inputs.append(f"1,F,{str(i)}")
-
-    inputs.append("***\n1")
-
-    with open(s["tas_file"], "w") as tas:
-        tas.write("\n".join(inputs))
-
-    requests.post('http://localhost:32270/tas/sendhotkey?id=Restart', timeout=5)
-
-    while True:
-        time.sleep(s["tas_wait"])
-        session_data = requests.get('http://localhost:32270/tas/info', timeout=2).text
-
-        if session_data.split("State")[1].split('<')[0] == ': Enable, FrameStep':
-            break
-        else:
-            print("tas_wait too short")
-
-    pos = session_data.split("Pos:   ")[1].split("\r\nSpeed: ")[0].split(",")
-    return float(pos[0]), float(pos[1]), "Dead" in session_data
+def create_individual(s: dict[str, any]) -> list[float]:
+    return [random.randrange(0, 360000) / 1000 for _ in range(s["dna_length"])]
 
 
 def format_settings(s: dict[str, any]) -> dict[str, any]:
@@ -114,7 +91,7 @@ def format_settings(s: dict[str, any]) -> dict[str, any]:
 
             try:
                 for j in range(int(cache[0])):
-                    n_fav.append(float(cache[2]))
+                    n_fav.append((str(random.randint(0, 1000)), float(cache[2])))
             except ValueError:
                 raise SystemError(f"Invalid favorite:\n{i}")
 
@@ -123,13 +100,8 @@ def format_settings(s: dict[str, any]) -> dict[str, any]:
 
         s["favorite"] = n_fav
 
-    s["header"] = s["console_load"].strip() + s["header"].replace(" ", "\n") + "***\n"
-
-    if s["axis"] != "x" and s["axis"] != "y" and s["axis"] != "radial":
-        raise SystemError("Invalid axis: must be x, y or radial")
-
-    if s["prim_dir"] != "+" and s["prim_dir"] != "-":
-        print("Invalid prim_dir: must be + or -")
+    if s["goal"] != "x" and s["goal"] != "y" and s["goal"] != "radial":
+        raise SystemError("Invalid goal: must be x, y or radial")
 
     print("Config OK")
     return s
@@ -140,20 +112,17 @@ def load_settings() -> dict[str, any]:
         with open("config.yaml", "r") as config_file:
             settings = yaml.safe_load(config_file)
 
-        str(settings["tas_file"])
-        str(settings["console_load"])
-        str(settings["header"])
-        str(settings["favorite"])
-        int(settings["dna_length"])
-        int(settings["population"])
-        str(settings["axis"])
-        str(settings["prim_dir"])
-        float(settings["sec_min"])
-        float(settings["sec_max"])
-        float(settings["sec_factor"])
-        float(settings["goal_x"])
-        float(settings["goal_y"])
-        float(settings["tas_wait"])
+        settings["favorite"] = str(settings["favorite"])
+        settings["goal"] = str(settings["goal"])
+        settings["spinner_file"] = str(settings["spinner_file"])
+        settings["dna_length"] = int(settings["dna_length"])
+        settings["population"] = int(settings["population"])
+        settings["prim_dir"] = bool(int(settings["prim_dir"]))
+        settings["sec_min"] = float(settings["sec_min"])
+        settings["sec_max"] = float(settings["sec_max"])
+        settings["sec_factor"] = float(settings["sec_factor"])
+        settings["goal_x"] = float(settings["goal_x"])
+        settings["goal_y"] = float(settings["goal_y"])
 
         return settings
     except yaml.YAMLError as error:
@@ -166,31 +135,24 @@ def load_settings() -> dict[str, any]:
 
 def check_file(path: str):
     try:
-        with open(path, "w") as file:
-            file.write("test")
+        with open(path, "r") as file:
+            file.read()
 
-        print("TAS file OK")
+        print("Spinner file OK")
         return
     except FileNotFoundError:
-        print("TAS file error: file not found")
+        print("Spinner file error: file not found")
     except PermissionError:
-        print("TAS file error: no writing permission")
+        print("Spinner file error: no reading permission")
     raise SystemError
 
 
-def check_connection():
-    while True:
-        try:
-            requests.get('http://localhost:32270/tas/info', timeout=2)
-        except requests.ConnectionError:
-            print("No connection to DebugRC server, please restart your game")
-            input("press enter to try again >>>")
-        else:
-            print("DebugRC OK")
-
-
-def take_second(x: list[list]) -> any:
-    return x[1]
+def import_spinners(path: str) -> list[(int, int)]:
+    from re import findall
+    with open("path", "r") as file:
+        gameinfo = file.read()
+    matches = findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
+    return [(round(float(m[0])), round(float(m[1]))) for m in matches]
 
 
 if __name__ == "__main__":

@@ -3,22 +3,22 @@ import math
 from typing import Optional
 
 
-def sim(posx: float, posy: float, inputs: list[float], spinners: list[list[float, float]],
-        boostx: float = 0, boosty: float = 0) -> (float, float, float, float, bool):
+def sim(posx: float, posy: float, inputs: list[float], spinners: list[(int, int)], killbox: list[(int, int, int, int)],
+        boostx: float, boosty: float) -> (float, float, float, float, bool):
     s = Sim()
     s.position = Vector2(posx, posy)
 
     if boostx != 0 or boosty != 0:
         s.aim = Vector2(boostx, boosty)
         feather_update(s)
-        if spinner_collision(s, spinners):
+        if collision(s, spinners, killbox):
             return s.position.x, s.position.y, s.speed.x, s.speed.y, True
         # print(s)
 
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
-        if spinner_collision(s, spinners):
+        if collision(s, spinners, killbox):
             return s.position.x, s.position.y, s.speed.x, s.speed.y, True
         # print(s)
 
@@ -28,10 +28,10 @@ def sim(posx: float, posy: float, inputs: list[float], spinners: list[list[float
 def main():
     print(sim(28565.1975392997, -8006.802460700270,
               [220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220., 220.,
-               220., 220., 220., 220., 220., 220., 220.], [(5, 6)], -1, -1))
+               220., 220., 220., 220., 220., 220., 220.], [(5, 6)], [], -1, -1))
     print(sim(28565.1975392997, -8006.802460700270,
               [300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300., 300.,
-               300., 300., 300., 300., 300., 300., 300.], [(7, 9)]))
+               300., 300., 300., 300., 300., 300., 300.], [(7, 9)], [], 0, 0))
 
 
 class Vector2:
@@ -206,7 +206,7 @@ def feather_movement(si: Sim):
     si.speed = current_dir * num
 
 
-def spinner_collision(si: Sim, spinners: list[(int, int)]) -> bool:
+def collision(si: Sim, spinners: list[(int, int)], killbox: list[(int, int, int, int)]) -> bool:
     for s in spinners:
         if (si.position.x - s[0]) ** 2 + (si.position.y + 6 - s[1]) ** 2 < 141:
             if (s[0] - 10.5 < si.position.y < s[1] + 10.5 and s[1] + 0.5 < si.position.x < s[1] + 9.5) or (
@@ -214,6 +214,9 @@ def spinner_collision(si: Sim, spinners: list[(int, int)]) -> bool:
                     s[0] - 7.5 < si.position.y < s[1] + 7.5 and s[1] - 1.5 < si.position.x < s[1] + 13.5) or (
                     s[0] - 6.5 < si.position.y < s[1] + 6.5 and s[1] - 2.5 < si.position.x < s[1] + 14.5):
                 return True
+    for k in killbox:
+        if k[0] - 2.5 < si.position.x < k[2] + 2.5 and k[1] + 3.5 < si.position.y < k[3] + 8.5:
+            return True
     return False
 
 

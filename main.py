@@ -3,7 +3,9 @@
 
 import random
 import re
+import sys
 
+import tqdm
 import yaml
 from pyeasyga import pyeasyga
 
@@ -25,10 +27,8 @@ def main():
     print("Starting Genetic Algorithm\n\n")
     ga.create_first_generation()
 
-    for _ in range(1, ga.generations):
+    for _ in tqdm.trange(1, ga.generations, ncols=100, file=sys.stdout):
         ga.create_next_generation()
-        # same as ga.run() but can print in-progress data of some sort
-        # alternatively, can easily be converted to a progress bar
 
     print("Last generation:\n")
     for individual in ga.last_generation():

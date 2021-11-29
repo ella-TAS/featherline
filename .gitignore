@@ -4,3 +4,5 @@
 *.pyd
 feather_sim_c.html
 feather_sim_c.c
+main_c.c
+main_c.html

@@ -1,9 +1,11 @@
 # tntfalle, 16.11.2021
 # Kataiser, cake, TheRoboMan
+# cython: language_level=3
 
 import random
 import re
 import sys
+from typing import Dict, List, Tuple
 
 import tqdm
 import yaml
@@ -44,7 +46,7 @@ def main():
 
 
 # change this to get better results (cateline)
-def fitness(individual: list[float], s: dict[str, any]) -> float:
+def fitness(individual: List[float], s: Dict[str, any]) -> float:
     posx, posy, speedx, speedy, dead = feather_sim.sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"], s["boost_x"], s["boost_y"])
     dead_offset = 100000 if dead else 0
 
@@ -57,7 +59,7 @@ def fitness(individual: list[float], s: dict[str, any]) -> float:
         return 100000 - (s["goal_x"] - posx) ** 2 + (s["goal_y"] - posy) ** 2 - dead_offset
 
 
-def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
+def crossover(parent_1: List[float], parent_2: List[float]) -> Tuple[any, any]:
     if random.random() < 0.5:
         # exchange parts
         index = random.randrange(1, len(parent_1))
@@ -73,7 +75,7 @@ def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
     return child_1, child_2
 
 
-def mutate(individual: list[float]):
+def mutate(individual: List[float]):
     # change multiple values
     length = random.randrange(int(len(individual) / 2))
     x = random.randrange(len(individual) - length)
@@ -98,11 +100,11 @@ def mutate(individual: list[float]):
     #     individual[i] = round(individual[start - 1], 3)
 
 
-def create_individual(s: dict[str, any]) -> list[float]:
+def create_individual(s: Dict[str, any]) -> List[float]:
     return s["favorite"] if s["favorite"] else [random.randrange(0, 360000) / 1000 for _ in range(s["dna_length"])]
 
 
-def format_settings(s: dict[str, any]) -> dict[str, any]:
+def format_settings(s: Dict[str, any]) -> Dict[str, any]:
     s["spinner_file"] = s["spinner_file"].strip("\n").strip()
     s["spinners"] = [[float(j) for j in i.split(",")] for i in s["spinners"].split()]
     s["killboxes"] = [[float(j) for j in i.split(",")] for i in s["killboxes"].split()]
@@ -134,7 +136,7 @@ def format_settings(s: dict[str, any]) -> dict[str, any]:
     return s
 
 
-def load_settings() -> dict[str, any]:
+def load_settings() -> Dict[str, any]:
     try:
         with open("config.yaml", "r") as config_file:
             settings = yaml.safe_load(config_file)
@@ -185,7 +187,7 @@ def check_file(path: str):
     raise SystemError
 
 
-def import_spinners(path: str) -> list[(int, int)]:
+def import_spinners(path: str) -> List[Tuple[int, int]]:
     with open(path, "r") as file:
         gameinfo = file.read()
 
@@ -193,7 +195,7 @@ def import_spinners(path: str) -> list[(int, int)]:
     return [(round(float(m[0])), round(float(m[1]))) for m in matches]
 
 
-def to_inputs(s: tuple[float, list[float]]) -> str:
+def to_inputs(s: Tuple[float, List[float]]) -> str:
     r = []
 
     for i in s:

@@ -1,22 +1,18 @@
 # tntfalle, 16.11.2021
 # Kataiser, cake, TheRoboMan
-import random
-from random import randint
 
+import random
 import yaml
 from pyeasyga import pyeasyga
-
 from feather_sim import sim
 
 
 def main():
     s = load_settings()
     s = format_settings(s)
-
-    s["spinners"] = []
     if s["spinner_file"] != "":
         check_file(s["spinner_file"])
-        s["spinners"] = import_spinners(s["spinner_file"])
+        s["spinners"] += import_spinners(s["spinner_file"])
 
     ga = pyeasyga.GeneticAlgorithm(s, s["population"], s["generations"], s["mutation_probability"],
                                    s["crossover_probability"], s["elitism"])
@@ -34,16 +30,18 @@ def main():
     print("\n\nBest individual:\n")
     print(ga.best_individual())
 
+    print(to_inputs(ga.best_individual()[1]))
+
 
 # change this to get better results (cateline)
 def fitness(individual: list[float], s: dict[str, any]) -> float:
-    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killbox"],
+    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"],
                                            s["boost_x"], s["boost_y"])
-    if s["axis"] == "x":
+    if s["goal"] == "x":
         return (posx if s["prim_dir"] else -posx) - (100000 if dead else 0) - (
             0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
             else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
-    elif s["axis"] == "y":
+    elif s["goal"] == "y":
         return (posy if s["prim_dir"] else -posy) - (100000 if dead else 0) - (
             0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"])
             else s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"])))
@@ -72,6 +70,10 @@ def mutate(individual: list[float]):
     increment = random.randint(-4000, 4000) / 1000
     for i in range(x, x + length):
         individual[i] = round(individual[i] + increment, 3)
+        if individual[i] >= 360:
+            individual[i] -= 360
+        elif individual[i] < 0:
+            individual[i] += 360
 
     # change a single value (for more precise optimisation) (rounding missing)
     # individual[random.randrange(len(individual))] += random.randint(-4000, 4000) / 1000
@@ -84,11 +86,14 @@ def mutate(individual: list[float]):
 
 
 def create_individual(s: dict[str, any]) -> list[float]:
-    return [random.randrange(0, 360000) / 1000 for _ in range(s["dna_length"])]
+    return s["favorite"] if s["favorite"] else [random.randrange(0, 360000) / 1000 for _ in range(s["dna_length"])]
 
 
 def format_settings(s: dict[str, any]) -> dict[str, any]:
     s["spinner_file"] = s["spinner_file"].strip("\n").strip()
+    s["spinners"] = [[float(j) for j in i.split(",")] for i in s["spinners"].split()]
+    s["killboxes"] = [[float(j) for j in i.split(",")] for i in s["killboxes"].split()]
+
     if s["favorite"].strip("\n").strip() == "":
         s["favorite"] = []
     else:
@@ -100,7 +105,7 @@ def format_settings(s: dict[str, any]) -> dict[str, any]:
 
             try:
                 for j in range(int(cache[0])):
-                    n_fav.append((str(random.randint(0, 1000)), float(cache[2])))
+                    n_fav.append(float(cache[2]))
             except ValueError:
                 raise SystemError(f"Invalid favorite:\n{i}")
 
@@ -122,6 +127,8 @@ def load_settings() -> dict[str, any]:
             settings = yaml.safe_load(config_file)
 
         # check for correct keys/values
+        settings["killboxes"] = str(settings["killboxes"])
+        settings["spinners"] = str(settings["spinners"])
         settings["favorite"] = str(settings["favorite"])
         settings["goal"] = str(settings["goal"])
         settings["spinner_file"] = str(settings["spinner_file"])
@@ -156,7 +163,7 @@ def check_file(path: str):
         with open(path, "r") as file:
             file.read()
 
-        print("Spinner file OK")
+        print("Spinner file OK", path)
         return
     except FileNotFoundError:
         print("Spinner file error: file not found")
@@ -171,6 +178,13 @@ def import_spinners(path: str) -> list[(int, int)]:
         gameinfo = file.read()
     matches = findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
     return [(round(float(m[0])), round(float(m[1]))) for m in matches]
+
+
+def to_inputs(s: tuple[float, list[float]]) -> str:
+    r = ""
+    for i in s:
+        r += "\n1,F," + str(i)
+    return r
 
 
 if __name__ == "__main__":

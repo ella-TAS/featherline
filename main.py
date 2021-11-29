@@ -27,7 +27,7 @@ def main():
     print("Starting Genetic Algorithm\n\n")
     ga.create_first_generation()
 
-    for _ in tqdm.trange(1, ga.generations, ncols=100, file=sys.stdout):
+    for _ in tqdm.trange(1, ga.generations, total=ga.generations, ncols=100, file=sys.stdout):
         ga.create_next_generation()
 
     print("Last generation:\n")

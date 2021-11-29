@@ -1,39 +1,47 @@
-#simulation settings
-pos_x: 0.0  #starting position
-pos_y: 0.0
+#SIMULATION SETTINGS
+pos_x: 7165.795268267390  #starting position
+pos_y: 4475.500048935410
 
 #feather boost in square mode - numbers can be seen in studio when boost is performed
 #if both are 0, the GA will optimize the first frame without square gate
-boost_x: 1.0
-boost_y: 1.0
+boost_x: 1.0  # - left | + right
+boost_y: -1.0  # - up | + down
 
-spinner_file: C:\Users\Kilian\Programm\Celeste\TAS Files\test.tas #export using CelesteTAS feature
+#frame number of angle inputs
+dna_length: 100
+
+spinner_file: ""  #export using CelesteTAS feature (if none put "")
+spinners: "
+7304,4448
+"
+killboxes: "
+
+"
 
 favorite: "
-  10,F,27.1
-  74,F,98
-"  # doesn't work currently
+  43,F,83.12
+  57,F,89.7
+"
 
 
 
-#genetic algorithm settings
-dna_length: 84
-population: 10
-generations: 20
+#GENETIC SETTINGS
+population: 50
+generations: 5000
 crossover_probability: 0.8
-mutation_probability: 0.05
+mutation_probability: 0.2
 elitism: 1
 
 
 
-#fitness function settings
+#FITNESS SETTINGS
 goal: x  # x | y | radial
 
 #for x/y
 prim_dir: 1  #primary axis: 1 right/down | 0 left/up
-sec_min: -540.5  #goal position on secondary axis
-sec_max: -530.5
-sec_factor: 50.0  #how many px on primary axis is 1px in secondary axis worth?
+sec_min: 4444.4999  #goal position on secondary axis
+sec_max: 4000
+sec_factor: 500.0  #how many px on primary axis is 1px in secondary axis worth?
 
 #for radial - goal position
 goal_x: 0.0

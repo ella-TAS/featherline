@@ -194,7 +194,7 @@ def to_inputs(s: tuple[float, list[float]]) -> str:
     r = []
 
     for i in s:
-        r.append("\n1,F," + str(i))
+        r.append(f"\n1,F,{str(i)}")
 
     return ''.join(r)
 

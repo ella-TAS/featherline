@@ -3,23 +3,26 @@ import math
 from typing import Optional
 
 
-def sim(posx: float, posy: float, inputs: list[float], spinners: list[(int, int)], killbox: list[(int, int, int, int)],
-        boostx: float, boosty: float) -> (float, float, float, float, bool):
+def sim(posx: float, posy: float, inputs: list[float], spinners: list[(int, int)], killbox: list[(int, int, int, int)], boostx: float, boosty: float) -> (float, float, float, float, bool):
     s = Sim()
     s.position = Vector2(posx, posy)
 
     if boostx != 0 or boosty != 0:
         s.aim = Vector2(boostx, boosty)
         feather_update(s)
+
         if collision(s, spinners, killbox):
             return s.position.x, s.position.y, s.speed.x, s.speed.y, True
+
         # print(s)
 
     for i in inputs:
         s.aim = vector_from_tas_angle(i, 1)
         feather_update(s)
+
         if collision(s, spinners, killbox):
             return s.position.x, s.position.y, s.speed.x, s.speed.y, True
+
         # print(s)
 
     return s.position.x, s.position.y, s.speed.x, s.speed.y, False

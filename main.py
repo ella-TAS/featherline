@@ -2,26 +2,33 @@
 # Kataiser, cake, TheRoboMan
 
 import random
+import re
+
 import yaml
 from pyeasyga import pyeasyga
+
 from feather_sim import sim
 
 
 def main():
     s = load_settings()
-    s = format_settings(s)
+
     if s["spinner_file"] != "":
         check_file(s["spinner_file"])
         s["spinners"] += import_spinners(s["spinner_file"])
 
-    ga = pyeasyga.GeneticAlgorithm(s, s["population"], s["generations"], s["mutation_probability"],
-                                   s["crossover_probability"], s["elitism"])
+    ga = pyeasyga.GeneticAlgorithm(s, s["population"], s["generations"], s["mutation_probability"], s["crossover_probability"], s["elitism"])
     ga.fitness_function = fitness
     ga.create_individual = create_individual
     ga.crossover_function = crossover
     ga.mutate_function = mutate
     print("Starting Genetic Algorithm\n\n")
-    ga.run()
+    ga.create_first_generation()
+
+    for _ in range(1, ga.generations):
+        ga.create_next_generation()
+        # same as ga.run() but can print in-progress data of some sort
+        # alternatively, can easily be converted to a progress bar
 
     print("Last generation:\n")
     for individual in ga.last_generation():
@@ -35,18 +42,16 @@ def main():
 
 # change this to get better results (cateline)
 def fitness(individual: list[float], s: dict[str, any]) -> float:
-    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"],
-                                           s["boost_x"], s["boost_y"])
-    if s["goal"] == "x":
-        return (posx if s["prim_dir"] else -posx) - (100000 if dead else 0) - (
-            0 if (s["sec_min"] <= posy <= s["sec_max"]) or (s["sec_max"] <= posy <= s["sec_min"])
-            else s["sec_factor"] * min(abs(posy - s["sec_min"]), abs(posy - s["sec_max"])))
-    elif s["goal"] == "y":
-        return (posy if s["prim_dir"] else -posy) - (100000 if dead else 0) - (
-            0 if (s["sec_min"] <= posx <= s["sec_max"]) or (s["sec_max"] <= posx <= s["sec_min"])
-            else s["sec_factor"] * min(abs(posx - s["sec_min"]), abs(posx - s["sec_max"])))
+    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"], s["boost_x"], s["boost_y"])
+    dead_offset = 100000 if dead else 0
+
+    if s["goal"] in ("x", "y"):
+        pos = posx if s["goal"] == "x" else posy
+
+        return (pos if s["prim_dir"] else -pos) - dead_offset - (0 if (s["sec_min"] <= pos <= s["sec_max"]) or (s["sec_max"] <= pos <= s["sec_min"]) else
+                                                                 s["sec_factor"] * min(abs(pos - s["sec_min"]), abs(pos - s["sec_max"])))
     else:
-        return 100000 - (s["goal_x"] - posx) ** 2 + (s["goal_y"] - posy) ** 2 - (100000 if dead else 0)
+        return 100000 - (s["goal_x"] - posx) ** 2 + (s["goal_y"] - posy) ** 2 - dead_offset
 
 
 def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
@@ -58,8 +63,10 @@ def crossover(parent_1: list[float], parent_2: list[float]) -> tuple[any, any]:
     else:
         # exchange every other value
         child_1, child_2 = parent_1, parent_2
+
         for i in range(0, len(parent_1), 2):
             child_1[i], child_2[i] = child_2[i], child_1[i]
+
     return child_1, child_2
 
 
@@ -68,8 +75,10 @@ def mutate(individual: list[float]):
     length = random.randrange(int(len(individual) / 2))
     x = random.randrange(len(individual) - length)
     increment = random.randint(-4000, 4000) / 1000
+
     for i in range(x, x + length):
         individual[i] = round(individual[i] + increment, 3)
+
         if individual[i] >= 360:
             individual[i] -= 360
         elif individual[i] < 0:
@@ -81,6 +90,7 @@ def mutate(individual: list[float]):
     # simplify (bias towards shorter inputs)
     # length = random.randrange(int(len(individual) / 4))
     # start = random.randint(1, len(individual) - length)
+    #
     # for i in range(start, start + length):
     #     individual[i] = round(individual[start - 1], 3)
 
@@ -148,12 +158,12 @@ def load_settings() -> dict[str, any]:
         settings["sec_factor"] = float(settings["sec_factor"])
         settings["goal_x"] = float(settings["goal_x"])
         settings["goal_y"] = float(settings["goal_y"])
-
-        return settings
     except yaml.YAMLError as error:
         print(f"Couldn't parse settings:\n{str(error)}")
     except (ValueError, TypeError, KeyError, FileNotFoundError) as error:
         print(f"Invalid config file: {repr(error)}")
+    else:
+        return format_settings(settings)
 
     raise SystemExit
 
@@ -164,27 +174,29 @@ def check_file(path: str):
             file.read()
 
         print("Spinner file OK", path)
-        return
     except FileNotFoundError:
         print("Spinner file error: file not found")
     except PermissionError:
         print("Spinner file error: no reading permission")
+
     raise SystemError
 
 
 def import_spinners(path: str) -> list[(int, int)]:
-    from re import findall
     with open(path, "r") as file:
         gameinfo = file.read()
-    matches = findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
+
+    matches = re.findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
     return [(round(float(m[0])), round(float(m[1]))) for m in matches]
 
 
 def to_inputs(s: tuple[float, list[float]]) -> str:
-    r = ""
+    r = []
+
     for i in s:
-        r += "\n1,F," + str(i)
-    return r
+        r.append("\n1,F," + str(i))
+
+    return ''.join(r)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 import timeit
-import math
 
 
 def main():

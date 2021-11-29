@@ -1,2 +1,6 @@
 /.idea
 /__pycache__
+/build
+*.pyd
+feather_sim_c.html
+feather_sim_c.c

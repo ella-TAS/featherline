@@ -1,9 +1,12 @@
+# cython: language_level=3
+
 import functools
 import math
-from typing import Optional
+from typing import List, Optional, Tuple
 
 
-def sim(posx: float, posy: float, inputs: list[float], spinners: list[(int, int)], killbox: list[(int, int, int, int)], boostx: float, boosty: float) -> (float, float, float, float, bool):
+def sim(posx: float, posy: float, inputs: List[float], spinners: List[Tuple[int, int]], killbox: List[Tuple[int, int, int, int]], boostx: float, boosty: float) \
+        -> (float, float, float, float, bool):
     s = Sim()
     s.position = Vector2(posx, posy)
 
@@ -38,7 +41,7 @@ class Vector2:
         self.y = y
 
     def __str__(self) -> str:
-        return f"({self.x:.3f}, {self.y:.3f})"
+        return "({:.3f}, {:.3f})".format(self.x, self.y)
 
     def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
@@ -96,7 +99,7 @@ class Sim:
         self.star_fly_speed_lerp: float = 0
 
     def __str__(self) -> str:
-        return f"{str(self.speed):<25}\t{str(self.position):<25}\t{self.aim.tas_angle():.4f}"
+        return "{:<25}{:<25}{:.4f}".format(str(self.speed), str(self.position), self.aim.tas_angle())
 
 
 # linearly interpolates between two values
@@ -204,7 +207,7 @@ def feather_movement(si: Sim):
     si.speed = current_dir * num
 
 
-def collision(si: Sim, spinners: list[(int, int)], killbox: list[(int, int, int, int)]) -> bool:
+def collision(si: Sim, spinners: List[Tuple[int, int]], killbox: List[Tuple[int, int, int, int]]) -> bool:
     for s in spinners:
         if (si.position.x - s[0]) ** 2 + (si.position.y + 6 - s[1]) ** 2 < 141:
             if (s[0] - 10.5 < si.position.x < s[0] + 10.5 and s[1] + 0.5 < si.position.y < s[1] + 9.5) or (

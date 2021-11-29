@@ -9,7 +9,10 @@ import tqdm
 import yaml
 from pyeasyga import pyeasyga
 
-from feather_sim import sim
+try:
+    import feather_sim_c as feather_sim
+except ModuleNotFoundError:
+    import feather_sim
 
 
 def main():
@@ -42,7 +45,7 @@ def main():
 
 # change this to get better results (cateline)
 def fitness(individual: list[float], s: dict[str, any]) -> float:
-    posx, posy, speedx, speedy, dead = sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"], s["boost_x"], s["boost_y"])
+    posx, posy, speedx, speedy, dead = feather_sim.sim(s["pos_x"], s["pos_y"], individual, s["spinners"], s["killboxes"], s["boost_x"], s["boost_y"])
     dead_offset = 100000 if dead else 0
 
     if s["goal"] in ("x", "y"):

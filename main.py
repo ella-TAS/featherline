@@ -180,18 +180,16 @@ def check_file(path: str):
 
         print("Spinner file OK", path)
     except FileNotFoundError:
-        print("Spinner file error: file not found")
+        raise SystemError("Spinner file error: file not found")
     except PermissionError:
-        print("Spinner file error: no reading permission")
-
-    raise SystemError
+        raise SystemError("Spinner file error: no reading permission")
 
 
 def import_spinners(path: str) -> List[Tuple[int, int]]:
     with open(path, "r") as file:
-        gameinfo = file.read()
+        gameinfo = file.readlines()
 
-    matches = re.findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo)
+    matches = re.findall(r"CrystalStaticSpinner: (-?\d+\.\d+), (-?\d+\.\d+)", gameinfo[1])
     return [(round(float(m[0])), round(float(m[1]))) for m in matches]
 
 

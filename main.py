@@ -81,7 +81,7 @@ def mutate(individual: List[float]):
     # change multiple values
     length = random.randrange(int(len(individual) / 2))
     x = random.randrange(len(individual) - length)
-    increment = random.randint(-4000, 4000) / 1000
+    increment = random.gauss(0, 2)
 
     for i in range(x, x + length):
         individual[i] = round(individual[i] + increment, 3)

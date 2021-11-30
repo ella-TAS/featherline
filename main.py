@@ -2,6 +2,7 @@
 # Kataiser, cake, TheRoboMan
 # cython: language_level=3
 
+import os
 import random
 import re
 import sys
@@ -18,6 +19,7 @@ except ModuleNotFoundError:
 
 
 def main():
+    sys.stdout = Logger()
     s = load_settings()
 
     if s["spinner_file"] != "":
@@ -32,7 +34,7 @@ def main():
     print("Starting Genetic Algorithm\n\n")
     ga.create_first_generation()
 
-    for _ in tqdm.trange(1, ga.generations, total=ga.generations, ncols=100, file=sys.stdout):
+    for _ in tqdm.trange(1, ga.generations, initial=1, total=ga.generations, ncols=100):
         ga.create_next_generation()
 
     print("Last generation:\n")
@@ -200,6 +202,29 @@ def to_inputs(s: Tuple[float, List[float]]) -> str:
         r.append(f"\n1,F,{str(i)}")
 
     return ''.join(r)
+
+
+# log all prints to a file
+class Logger(object):
+    def __init__(self):
+        self.filename: str = 'out.log'
+
+        if os.path.isfile(self.filename):
+            os.remove(self.filename)
+
+        self.terminal = sys.stdout
+        self.log = open(self.filename, 'a')
+        self.print_enabled: bool = True
+
+    def write(self, message):
+        self.log.write(message)
+        self.log.flush()
+
+        if self.print_enabled:
+            self.terminal.write(message)
+
+    def flush(self):
+        pass
 
 
 if __name__ == "__main__":

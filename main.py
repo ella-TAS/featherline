@@ -56,7 +56,7 @@ def fitness(individual: List[float], s: Dict[str, any]) -> float:
         pos = posx if s["goal"] == "x" else posy
 
         return (pos if s["prim_dir"] else -pos) - dead_offset - (0 if (s["sec_min"] <= pos <= s["sec_max"]) or (s["sec_max"] <= pos <= s["sec_min"]) else
-                                                                 s["sec_factor"] * min(abs(pos - s["sec_min"]), abs(pos - s["sec_max"])))
+                                                                 min(abs(pos - s["sec_min"]), abs(pos - s["sec_max"])) / s["sec_factor"])
     else:
         return 100000 - (s["goal_x"] - posx) ** 2 + (s["goal_y"] - posy) ** 2 - dead_offset
 

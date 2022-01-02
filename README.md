@@ -2,5 +2,5 @@
 genetic algorithm for analog feather movement in Celeste
 
 
-created by tntfalle, Kataiser, cake
-special thanks to WegFan, TASMalleo, Poffel
+created by TheRoboMan, tntfalle, Kataiser, mikachelya
+special thanks to TASMalleo

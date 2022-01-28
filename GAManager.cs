@@ -29,7 +29,7 @@ namespace Featherline
             var timer = Stopwatch.StartNew();
 
             //flight debugging
-            new FeatherSim(settings).Debug(ParseFavorite(settings.Favorite, 120));
+            //new FeatherSim(settings).Debug(ParseFavorite(settings.Favorite, 120));
 
             if (settings.FrameBasedOnly || !settings.TimingTestFavDirectly) {
                 DoFrameGeneBasedAlgorithm();

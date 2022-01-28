@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using static System.Math;
-using System.Collections.Generic;
 
 namespace Featherline
 {

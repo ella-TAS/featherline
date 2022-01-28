@@ -147,7 +147,7 @@ namespace Featherline
 
                 int y = si.spd.Y > 0 ? D : U;
                 if (Tiles.map[y][L] | Tiles.map[y][R])
-                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? 4 : -0) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
+                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? 0 : -4) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
             }
 
             void UpdateLR()

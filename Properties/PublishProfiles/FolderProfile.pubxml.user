@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<!--
-https://go.microsoft.com/fwlink/?LinkID=208121. 
--->
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <History>True|2021-12-17T14:45:32.0527977Z;True|2021-12-16T17:43:28.8631050+02:00;True|2021-12-14T21:56:11.2507751+02:00;True|2021-12-14T20:30:59.5413403+02:00;True|2021-12-14T20:24:53.3766655+02:00;True|2021-12-14T20:18:30.6845186+02:00;False|2021-12-14T20:05:43.7972269+02:00;True|2021-12-07T22:56:17.6340146+02:00;</History>
-  </PropertyGroup>
-</Project>

@@ -8,7 +8,15 @@ namespace Featherline
     {
         public Func<bool> IsDead;
 
-        public bool DeathCheck()
+        private int framesSinceDistFilter = 999;
+        private IntVec2[] distFiltSpinners;
+        private RectangleHitbox[] distFiltKBs;
+        private Spike[] distFiltSpikes;
+
+        private int framesSinceColliderFilter = 999;
+        private Collider[] distFiltColls;
+
+        private bool DeathCheck()
         {
             framesSinceDistFilter++;
 
@@ -17,32 +25,32 @@ namespace Featherline
 
             DistFilterHazards();
 
-            return RawCollision();
+            return RawHazardCollision();
         }
 
-        bool CheckDangerMap()
+        private bool CheckDangerMap()
         {
             if (si.intPos.X < DeathMap.xMin || si.intPos.X > DeathMap.xMax || si.intPos.Y < DeathMap.yMin || si.intPos.Y > DeathMap.yMax)
                 return false;
             return DeathMap.map[(si.intPos.X + 2 - DeathMap.xMin) / 8][(si.intPos.Y - DeathMap.yMin) / 8];
         }
 
-        void DistFilterHazards()
+        private void DistFilterHazards()
         {
             if (framesSinceDistFilter >= 5) {
-                var dummyPos = new IntVec2(si.position + (wind.current * 5 * DeltaTime));
+                var dummyPos = new IntVec2(si.pos + (wind.current * 5 * DeltaTime));
 
-                distFiltered.spinners = Spinners.Where(spn => Math.Pow(spn.X - dummyPos.X, 2) + Math.Pow(spn.Y - dummyPos.Y, 2) < 900).ToArray();
-                distFiltered.killboxes = Killboxes.Where(kbx => kbx.GetActualDistance(si.intPos) < 30).ToArray();
-                distFiltered.spikes = Spikes.Where(spk => spk.GetActualDistance(si.intPos) < 30).ToArray();
+                distFiltSpinners = Spinners.Where(spn => Math.Pow(spn.X - dummyPos.X, 2) + Math.Pow(spn.Y - dummyPos.Y, 2) < 900).ToArray();
+                distFiltKBs = Killboxes.Where(kbx => kbx.GetActualDistance(si.intPos) < 30).ToArray();
+                distFiltSpikes = Spikes.Where(spk => spk.GetActualDistance(si.intPos) < 30).ToArray();
 
                 framesSinceDistFilter = 0;
             }
-        } 
+        }
 
-        public bool RawCollision()
+        private bool RawHazardCollision()
         {
-            foreach (var s in distFiltered.spinners)
+            foreach (var s in distFiltSpinners)
                 if (Math.Pow(si.intPos.X - s.X, 2) + Math.Pow(si.intPos.Y - 4 - s.Y, 2) < 145
                 && ((s.X - 7 < si.intPos.X && si.intPos.X < s.X + 7 && s.Y - 3 < si.intPos.Y && si.intPos.Y < s.Y + 15) || // slightly tall
                     (s.X - 8 < si.intPos.X && si.intPos.X < s.X + 8 && s.Y - 2 < si.intPos.Y && si.intPos.Y < s.Y + 14) || // square
@@ -50,103 +58,122 @@ namespace Featherline
                     (s.X - 11 < si.intPos.X && si.intPos.X < s.X + 11 && s.Y < si.intPos.Y && si.intPos.Y < s.Y + 10)))
                     return true;
 
-            for (int i = 0; i < distFiltered.killboxes.Length; i++)
-                if (distFiltered.killboxes[i].TouchingAsFeather(si.intPos))
+            for (int i = 0; i < distFiltKBs.Length; i++)
+                if (distFiltKBs[i].TouchingAsFeather(si.intPos))
                     return true;
 
-            for (int i = 0; i < distFiltered.spikes.Length; i++)
-                if (distFiltered.spikes[i].Died(si.intPos, si.speed))
+            for (int i = 0; i < distFiltSpikes.Length; i++)
+                if (distFiltSpikes[i].Died(si.intPos, si.spd))
                     return true;
 
             return false;
         }
 
-        public bool RawSpinnerColl(int x, int y) => distFiltered.spinners.Any(s => Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 145
+        private bool RawSpinnerColl(int x, int y) => distFiltSpinners.Any(s => Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 145
             && ((s.X - 7 < x && x < s.X + 7 && s.Y - 3 < y && y < s.Y + 15) || // slightly tall
                 (s.X - 8 < x && x < s.X + 8 && s.Y - 2 < y && y < s.Y + 14) || // square
                 (s.X - 9 < x && x < s.X + 9 && s.Y - 1 < y && y < s.Y + 13) || // slightly squished
-                (s.X -11 < x && x < s.X +11 && s.Y     < y && y < s.Y + 10))); // sideways bar
+                (s.X - 11 < x && x < s.X + 11 && s.Y < y && y < s.Y + 10))); // sideways bar
 
         private void UpdatePosition()
         {
-            si.position.X += si.speed.X * DeltaTime;
-
-            si.position.X =
-                si.position.X < Tiles.x + 3.5f
-                ? Tiles.x + 4
-                : si.position.X >= Tiles.rightBound - 3.5f
-                    ? Tiles.rightBound - 4
-                    : si.position.X;
-
-            si.intPos.X = (int)Math.Round(si.position.X);
-
-            int L = (si.intPos.X - Tiles.x - 4) / 8;
-            int R = (si.intPos.X - Tiles.x + 3) / 8;
-
-            int U = (si.intPos.Y - Tiles.y - 10) / 8;
-            int D = (si.intPos.Y - Tiles.y - 3) / 8;
-            U = U > 0 ? U : 0;
-            D = D > 0 ? D : 0;
-            U = U < Tiles.lowestYIndex ? U : Tiles.lowestYIndex;
-            D = D < Tiles.lowestYIndex ? D : Tiles.lowestYIndex;
-
-            int x = si.speed.X > 0 ? R : L;
-            bool c1 = Tiles.map[U][x];
-            bool c2 = Tiles.map[D][x];
-
-            foreach (var coll in Colliders) {
-                if (coll.TouchingAsFeather(si.intPos)) {
-                    si.position.X = si.speed.X > 4 ? coll.L - 1 : coll.R + 1;
-                    si.intPos.X = (int)Math.Round(si.position.X);
-                    BounceX();
-                    break;
-                }
-            }
-            if (c1 || c2) {
-                si.position.X = (si.intPos.X - Tiles.x + (si.speed.X > 0 ? -4 : 3)) / 8 * 8 + 4 + Tiles.x;
-                si.intPos.X = (int)Math.Round(si.position.X);
-                L = (si.intPos.X - Tiles.x - 4) / 8;
-                R = (si.intPos.X - Tiles.x + 3) / 8;
-                BounceX();
+            if (++framesSinceColliderFilter >= 5) {
+                distFiltColls = Colliders.Where(coll => coll.GetActualDistance(si.intPos) < 30).ToArray();
+                framesSinceColliderFilter = 0;
             }
 
-            si.position.Y += si.speed.Y * DeltaTime;
-            si.intPos.Y = (int)Math.Round(si.position.Y);
+            int L, R, U, D;
 
-            U = (si.intPos.Y - Tiles.y - 10) / 8;
-            D = (si.intPos.Y - Tiles.y - 3) / 8;
-            U = U > 0 ? U : 0;
-            D = D > 0 ? D : 0;
-            U = U < Tiles.lowestYIndex ? U : Tiles.lowestYIndex;
-            D = D < Tiles.lowestYIndex ? D : Tiles.lowestYIndex;
+            XMove();
+            YMove();
 
-            int y = si.speed.Y > 0 ? D : U;
-            c1 = Tiles.map[y][L];
-            c2 = Tiles.map[y][R];
-
-            foreach (var coll in Colliders) {
-                if (coll.TouchingAsFeather(si.intPos)) {
-                    si.position.X = si.speed.X > 4 ? coll.L - 1 : coll.R + 1;
-                    si.intPos.X = (int)Math.Round(si.position.X);
-                    BounceX();
-                    break;
-                }
-            }
-            if (c1 || c2 || Colliders.Any(coll => coll.TouchingAsFeather(si.intPos))) {
-                si.position.Y = (si.intPos.Y - Tiles.y + (si.speed.Y > 0 ? 4 : -0)) / 8 * 8 + 2 + Tiles.y;
-                si.intPos.Y = (int)Math.Round(si.position.Y);
-                BounceY();
-            }
-
-            void BounceX()
+            void XMove()
             {
-                si.speed.X *= -0.5f;
-                fitnessOffset += sett.AvoidWalls ? -6000 : 0;
+                //if (si.f == 108) {
+                //}
+
+                si.pos.X += si.spd.X * DeltaTime;
+                si.intPos.X = (int)Math.Round(si.pos.X);
+
+                // custom colliders (take priority over room border)
+                for (int i = 0; i < distFiltColls.Length; i++) {
+                    if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                        BounceX(si.spd.X > 0
+                            ? distFiltColls[i].L - 1
+                            : distFiltColls[i].R + 1);
+                        return;
+                    }
+                }
+
+                // room border behavior
+                if (si.intPos.X - 3 <= Tiles.x) {
+                    si.pos.X += Tiles.x + 4 - si.intPos.X;
+                    si.intPos.X = Tiles.x + 4;
+                    si.spd.X = 0f;
+                    UpdateLR();
+                    return;
+                }
+                else if (si.intPos.X + 4 > Tiles.rightBound) {
+                    si.pos.X += Tiles.rightBound - 4 - si.intPos.X;
+                    si.intPos.X = Tiles.rightBound - 4;
+                    si.spd.X = 0f;
+                    UpdateLR();
+                    return;
+                }
+
+                UpdateLR();
+                UpdateUD();
+
+                int x = si.spd.X > 0 ? R : L;
+                if (Tiles.map[U][x] | Tiles.map[D][x])
+                    BounceX((si.intPos.X + (si.spd.X > 0 ? -4 : 3) - Tiles.x) / 8 * 8 + 4 + Tiles.x);
             }
-            void BounceY()
+
+            void YMove()
             {
-                si.speed.Y *= -0.5f;
-                fitnessOffset += sett.AvoidWalls ? -6000 : 0;
+                si.pos.Y += si.spd.Y * DeltaTime;
+                si.intPos.Y = (int)Math.Round(si.pos.Y);
+
+                for (int i = 0; i < distFiltColls.Length; i++) {
+                    if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                        BounceY(si.spd.Y > 0
+                            ? distFiltColls[i].U - 1
+                            : distFiltColls[i].D + 1);
+                        return;
+                    }
+                }
+
+                UpdateUD();
+
+                int y = si.spd.Y > 0 ? D : U;
+                if (Tiles.map[y][L] | Tiles.map[y][R])
+                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? 4 : -0) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
+            }
+
+            void UpdateLR()
+            {
+                L = (si.intPos.X - 4 - Tiles.x) / 8;
+                R = (si.intPos.X + 3 - Tiles.x) / 8;
+            }
+            void UpdateUD()
+            {
+                U = (si.intPos.Y - 10 - Tiles.y) / 8;
+                D = (si.intPos.Y - 3 - Tiles.y) / 8;
+                U = U > 0 ? U < Tiles.lowestYIndex ? U : Tiles.lowestYIndex : 0;
+                D = D > 0 ? D < Tiles.lowestYIndex ? D : Tiles.lowestYIndex : 0;
+            }
+            void BounceX(int newX)
+            {
+                si.pos.X = newX;
+                si.intPos.X = newX;
+                si.spd.X *= -0.5f;
+                UpdateLR();
+            }
+            void BounceY(int newY)
+            {
+                si.pos.Y = newY;
+                si.intPos.Y = newY;
+                si.spd.Y *= -0.5f;
             }
         }
     }

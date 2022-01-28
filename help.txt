@@ -1,0 +1,41 @@
+﻿
+To get started with Featherline, follow these steps:
+
+1: Click on Copy -> Info Template to copy the custom info template to your clipboard.
+Then Right click on the info panel of celeste studio and click "Set Custom Info Template From Clipboard".
+Also, entity watch would likely break it if you have it on.
+
+2: Click on Copy -> Setup TAS Snippet to copy the info file creation script to your clipboard,
+then paste it to your TAS. Then make sure you make the first frame of feather movement is in between the commands.
+As an example:
+
+  13,R,U,X
+  26
+StartExportGameInfo infodump.txt
+   1,R,U
+FinishExportGameInfo
+
+Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.
+
+3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
+
+4: Either define a checkpoint at every major turn of the part you want to TAS,
+or give the program initial inputs to work with then define one checkpoint as the ending.
+Checkpoints are further explained later in this file.
+
+5: Click the Run Algorithm button.
+
+
+
+--- Checkpoints ---
+
+- To define a checkpoint, hold your info HUD hotkey and drag while holding right click to draw a rectangle hitbox.
+  Doing that will copy the selected area to your clipboard, where you can paste it to a line on the checkpoints text box.
+
+- Checkpoint collision is based on your hurtbox. To define a touch switch or feather as a checkpoint, select
+  an area that perfectly overlaps with its hitbox. Remember to use the pink, bigger hitbox for touch switches.
+
+- The genetic algorithm primarily flies directly towards the next checkpoint.
+  If the next checkpoint is behind a wall of spinners, it will simply fly towards that
+  wall of spinners and try to get as close to the checkpoint as it can that way.
+  That means you should define a checkpoint at every major turn so it knows where to go.

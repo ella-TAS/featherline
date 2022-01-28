@@ -4,8 +4,12 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <ApplicationIcon />
-    <StartupObject />
+    <ApplicationIcon></ApplicationIcon>
+    <Win32Resource />
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="CustomParallel.cs" />
+  </ItemGroup>
 
 </Project>

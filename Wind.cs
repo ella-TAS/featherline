@@ -8,7 +8,7 @@
         {
             if (doWind) {
                 // check wind triggers and update target wind speed
-                foreach (var WT in Level.windTriggers) {
+                foreach (var WT in Level.WindTriggers) {
                     if (si.intPos.X >= WT.L &&
                         si.intPos.X <= WT.R &&
                         si.intPos.Y >= WT.U &&
@@ -29,7 +29,7 @@
 
                 wind.UpdateWindSpeed();
 
-                si.position += wind.current * DeltaTime;
+                si.pos += wind.current * DeltaTime;
                 si.UpdateIntPos();
             }
         }
@@ -40,7 +40,7 @@
         public bool vertWind;
         public float strength;
 
-        public WindTrigger(IntVec2 pos, IntVec2 size, bool vertical, float stren) : base(pos.X, pos.Y, pos.X + size.X, pos.Y + size.Y, true)
+        public WindTrigger(IntVec2 pos, IntVec2 size, bool vertical, float stren) : base(pos.X, pos.Y, pos.X + size.X, pos.Y + size.Y)
         {
             vertWind = vertical;
             strength = stren;
@@ -49,7 +49,7 @@
 
     public class WindState
     {
-        public Vector2 current = Level.initWind;
+        public Vector2 current = Level.InitWind;
         public Vector2 target;
 
         public (ChangeState X, ChangeState Y) changeStates = (ChangeState.None, ChangeState.None);
@@ -90,6 +90,15 @@
                     }
                     break;
             }
+        }
+
+        public WindState Copy()
+        {
+            var copied = new WindState();
+            copied.current = current;
+            copied.target = target;
+            copied.changeStates = (changeStates.X, changeStates.Y);
+            return copied;
         }
     }
 

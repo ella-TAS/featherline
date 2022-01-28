@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.IO;
 using System.Text.RegularExpressions;
-using System.Collections;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using System.Text;
+using System.Diagnostics;
 
 namespace Featherline
 {
     static class GAManager
     {
-        public static Settings settings = null;
+        public static Settings settings;
         public static Random rand = new Random();
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -21,7 +18,51 @@ namespace Featherline
 
         public static int generation;
 
+        static FrameGenesGA ga;
         public static void BeginAlgorithm(Form1 sender)
+        {
+            if (!InitializeAlgorithm(sender)) {
+                ClearAlgorithmData();
+                return;
+            }
+
+            var timer = Stopwatch.StartNew();
+
+            //flight debugging
+            new FeatherSim(settings).Debug(ParseFavorite(settings.Favorite, 120));
+
+            if (settings.FrameBasedOnly || !settings.TimingTestFavDirectly) {
+                DoFrameGeneBasedAlgorithm();
+                Console.WriteLine("\nBasic Algorithm Finished!\n");
+            }
+
+            if (!settings.FrameBasedOnly) {
+                TimingTester TT;
+                if (settings.TimingTestFavDirectly) {
+                    if (ParseFavorite(settings.Favorite, settings.Framecount) is null)
+                        Console.WriteLine("No initial inputs to test timings on.");
+                    else {
+                        TT = new TimingTester(settings, settings.Favorite);
+                        TT.Run();
+                    }
+                }
+                else {
+                    TT = new TimingTester(settings, ga.inds[0].genes);
+                    TT.Run();
+                }
+            }
+            else {
+                Console.WriteLine();
+                ga.PrintBestIndividual();
+            }
+
+            timer.Stop();
+            Console.WriteLine($"\nAlgorithm took {timer.Elapsed} to run.");
+
+            ClearAlgorithmData();
+        }
+
+        private static bool InitializeAlgorithm(Form1 sender)
         {
             AllocConsole();
             Console.Title = "Featherline Output Console";
@@ -29,58 +70,70 @@ namespace Featherline
 
             // data extraction and input exception handling
             try {
-                Level.Prepare(Form1.settings);
                 sender.SaveSettings();
+                Level.Prepare(Form1.settings);
             }
             catch (ArgumentException e) {
                 Console.WriteLine(e.Message);
-                return;
+                return false;
             }
-            catch {
-                Console.WriteLine("The information source directory is either invalid or undefined.");
-                return;
+            catch (Exception e) {
+                Console.WriteLine(e.ToString());
+                Console.WriteLine("\nThe extracted information is either invalid or an exception occured during the setup process otherwise.\nPing TheRoboMan on the Celeste discord if you think this shouldnt have happened.");
+                return false;
             }
-            if (Form1.settings.Checkpoints.Length == 0) {
+            finally { }
+            if (Level.Checkpoints.Length == 0) {
                 Console.WriteLine("No valid checkpoints were provided; the algorithm has nothing to aim for.");
-                return;
+                return false;
             }
+
             settings = Form1.settings.Copy();
+            return true;
+        }
 
-            //FeatherSim.sett = settings;
+        #region FrameBasedAlgorithm
 
-            //var test = new FeatherSim(settings).SimulateIndivitual(ParseFavorite(settings.Favorite, 120));
-            //Console.ReadLine();
-
-            GA ga = settings.LimitInputLinesMode ? (GA)new LineGenesGA(settings) : new FrameGenesGA(settings);
+        private static void DoFrameGeneBasedAlgorithm()
+        {
+            ga = new FrameGenesGA(settings);
             generation = 1;
 
-            {
-                var fav = RawFavorite(settings.Favorite);
-                int gensForIncreasingFrameCount = Math.Max(1, settings.Generations / 2);
-                int startAt = Math.Max(5, fav is null ? 0 : fav.Length);
-                int gensPerFrame = gensForIncreasingFrameCount / (settings.Framecount - startAt);
-                for (int i = startAt; i < settings.Framecount; i++) {
-                    for (int j = 0; j < gensPerFrame; j++) {
-                        Console.Write($"\r{generation}/{settings.Generations} generations done. Best fitness: {ga.GetBestFitness()}     ");
-                        ga.DoGeneration(i);
-                        generation++;
-                    }
+            DoGensWhileSimulationsGetLonger();
+
+            NormalGenerations();
+        }
+
+        private static void DoGensWhileSimulationsGetLonger()
+        {
+            var fav = RawFavorite(settings.Favorite);
+            int gensForIncreasingFrameCount = Math.Max(1, settings.Generations / 2);
+            int startAt = Math.Max(5, fav is null ? 0 : fav.Length);
+
+            int divisor = settings.Framecount - startAt;
+            if (divisor == 0) return;
+
+            int gensPerFrame = gensForIncreasingFrameCount / divisor;
+            for (int i = startAt; i < settings.Framecount; i++) {
+                for (int j = 0; j < gensPerFrame; j++) {
+                    ga.DoGeneration(i, true);
+                    Console.Write($"\r{generation}/{settings.Generations} generations done. Best fitness: {ga.GetBestFitness()}     ");
+                    generation++;
                 }
             }
+        }
 
+        private static void NormalGenerations()
+        {
             for (; generation <= settings.Generations; generation++) {
                 Console.Write($"\r{generation}/{settings.Generations} generations done. Best fitness: {ga.GetBestFitness()}     ");
-                ga.DoGeneration(settings.Framecount);
+                ga.DoGeneration(settings.Framecount, true);
             }
-            Console.WriteLine();
-
-            ga.PrintBestIndividual();
-
-            Level.Spinners = null;
-            Level.DeathMap = null;
-            Level.Tiles = null;
-            Level.windTriggers = null;
         }
+
+        #endregion
+
+        #region InputConverting
 
         public static float[] ParseFavorite(string src, int targetLen)
         {
@@ -109,6 +162,44 @@ namespace Featherline
                 res = res.Concat(Enumerable.Repeat(angle, fCount)).ToArray();
             }
             return res;
+        }
+
+        public static string FrameGenesToString(float[] inputs)
+        {
+            var sb = new StringBuilder();
+
+            float lastAngle = inputs[0];
+            int consecutive = 1;
+            foreach (var f in inputs.Skip(1)) {
+                if (f != lastAngle) {
+                    sb.AppendLine($"{consecutive,4},F,{lastAngle.ToString().Replace(',', '.')}");
+                    lastAngle = f;
+                    consecutive = 1;
+                }
+                else
+                    consecutive++;
+            }
+            sb.AppendLine($"{consecutive,4},F,{lastAngle.ToString().Replace(',', '.')}");
+
+            return sb.ToString();
+        }
+
+        #endregion
+
+        private static void ClearAlgorithmData()
+        {
+            Level.Spinners = null;
+            Level.DeathMap = null;
+            Level.Tiles = null;
+            Level.WindTriggers = null;
+            Level.Checkpoints = null;
+            Level.Colliders = null;
+            Level.Killboxes = null;
+            Level.Spikes = null;
+            settings = null;
+            ga = null;
+            AnglePerfector.baseInfo = null;
+            GC.Collect();
         }
     }
 }

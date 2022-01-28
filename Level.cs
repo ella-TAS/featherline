@@ -13,36 +13,42 @@ namespace Featherline
         public static DeathMapInfo DeathMap;
 
         public static IntVec2[] Spinners;
-        public static RectangleHitbox[] Killboxes = new RectangleHitbox[0];
+        public static RectangleHitbox[] Killboxes;
         public static Spike[] Spikes;
 
         public static SolidTileInfo Tiles;
 
-        public static WindTrigger[] windTriggers;
-        public static Vector2 initWind;
-
-        public static IntVec2[] Feathers;
-        public static IntVec2[] Switches;
+        public static WindTrigger[] WindTriggers;
+        public static Vector2 InitWind;
 
         public static bool HasHazards;
 
-        public static Collider[] Colliders = new Collider[0];
+        public static Collider[] Colliders;
+
+        public static Checkpoint[] Checkpoints;
 
         static Settings srcSett;
         public static void Prepare(Settings sourceSettings)
         {
+            Colliders = new Collider[0];
+            Killboxes = new RectangleHitbox[0];
+
             srcSett = sourceSettings;
             string src = File.ReadAllText(srcSett.InfoFile);
-            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Feathers:(.*)TouchSwitches:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)Bounds:(.*)");
+            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)Bounds:(.*)");
 
             GetPosAndSpd(split.Groups[1].Value);
             GetSpinners(split.Groups[2].Value);
             GetLightning(split.Groups[3].Value, split.Groups[4].Value);
             GetSpikes(split.Groups[5].Value, split.Groups[6].Value, split.Groups[7].Value);
-            GetFeathersAndSwitches(split.Groups[8].Value, split.Groups[9].Value);
-            GetWind(split.Groups[10].Value, split.Groups[11].Value, split.Groups[12].Value, split.Groups[13].Value, split.Groups[14].Value);
-            GetSolidTiles(split.Groups[15].Value);
+            GetWind(split.Groups[8].Value, split.Groups[9].Value, split.Groups[10].Value, split.Groups[11].Value, split.Groups[12].Value);
+            GetSolidTiles(split.Groups[13].Value);
+
+            srcSett.ManualHitboxes ??= new string[0];
             GetCustomHitboxes();
+            srcSett.Checkpoints ??= new string[0];
+            GetCheckpoints();
+
             CreateDangerBitMap();
         }
 
@@ -54,6 +60,7 @@ namespace Featherline
             srcSett.BoostX = float.Parse(m.Groups[3].Value);
             srcSett.BoostY = float.Parse(m.Groups[4].Value);
             srcSett.DefineStartBoost = srcSett.BoostX != 0 || srcSett.BoostY != 0;
+            srcSett.StartAngle = new Vector2(srcSett.BoostX, srcSett.BoostY).TASAngle;
         }
 
         private static void GetSpinners(string src)
@@ -68,13 +75,12 @@ namespace Featherline
         {
             var getUL = getIntPair.Matches(UL);
             var getDR = getIntPair.Matches(DR);
-            
+
             Killboxes = Killboxes.Concat(getUL.Select((m, i) => new RectangleHitbox(
                     int.Parse(m.Groups[1].Value),
                     int.Parse(m.Groups[2].Value),
                     int.Parse(getDR[i].Groups[1].Value),
-                    int.Parse(getDR[i].Groups[2].Value),
-                    true
+                    int.Parse(getDR[i].Groups[2].Value)
                 ))).ToArray();
         }
 
@@ -96,7 +102,7 @@ namespace Featherline
         private static void GetWind(string init, string positions, string patterns, string widths, string heights)
         {
             var getInit = Regex.Match(init, @"(-?\d+\.?\d*), (-?\d+\.?\d*)");
-            initWind = new Vector2(
+            InitWind = new Vector2(
                 float.Parse(getInit.Groups[1].Value, CultureInfo.InvariantCulture) / 10,
                 float.Parse(getInit.Groups[2].Value, CultureInfo.InvariantCulture) / 10);
 
@@ -110,15 +116,15 @@ namespace Featherline
 
             for (int i = 0; i < getPoses.Length; i++) {
                 (bool vertical, float stren, bool valid) pattern = getPatterns[i] switch {
-                    "Left"       => (false, -40, true),
+                    "Left" => (false, -40, true),
                     "LeftStrong" => (false, -80, true),
-                    "Right"      => (false, 40, true),
-                    "RightStrong"=> (false, 80, true),
+                    "Right" => (false, 40, true),
+                    "RightStrong" => (false, 80, true),
                     "RightCrazy" => (false, 120, true),
-                    "Up"         => (true, -40, true),
-                    "Down"       => (true, 30, true),
-                    "None"       => (false, 0, true),
-                    _            => (false, 0, false)
+                    "Up" => (true, -40, true),
+                    "Down" => (true, 30, true),
+                    "None" => (false, 0, true),
+                    _ => (false, 0, false)
                 };
 
                 if (!pattern.valid) {
@@ -130,15 +136,9 @@ namespace Featherline
                 listWT.Add(new WindTrigger(getPoses[i], new IntVec2(getWidths[i], getHeights[i]), pattern.vertical, pattern.stren));
             }
 
-            windTriggers = listWT.ToArray();
+            WindTriggers = listWT.ToArray();
 
-            FeatherSim.doWind = initWind.X != 0 || initWind.Y != 0 || windTriggers.Length != 0;
-        }
-
-        private static void GetFeathersAndSwitches(string feathers, string switches)
-        {
-            Feathers = getIntPair.Matches(feathers).Select(MatchToIntVec2).Distinct().ToArray();
-            Switches = getIntPair.Matches(switches).Select(MatchToIntVec2).Distinct().ToArray();
+            FeatherSim.doWind = InitWind.X != 0 || InitWind.Y != 0 || WindTriggers.Length != 0;
         }
 
         private static void CreateDangerBitMap()
@@ -248,7 +248,8 @@ namespace Featherline
 
             int widthInTiles = Tiles.width / 8;
 
-            var rowMatches = Regex.Matches(parts.Groups[5].Value, @"(?<= )[^ ]*");
+            string tileMap = Regex.Replace(parts.Groups[5].Value, @",\s", "");
+            var rowMatches = Regex.Matches(tileMap, @"(?<= )[^ ]*");
             Tiles.map = rowMatches.Select(RowStrToBitArr).ToArray();
 
             int expectedRowCount = Tiles.lowestYIndex + 1;
@@ -273,30 +274,71 @@ namespace Featherline
             var kbs = new List<RectangleHitbox>();
             var colls = new List<Collider>();
 
-            foreach (var hb in srcSett.manualHitboxes) {
-                if (ValidCells(hb[..4])) {
-                    int[] b; // b for bounds
-                    try {
-                        b = new int[] {
-                            ProcessInput(hb[0]),
-                            ProcessInput(hb[1]),
-                            ProcessInput(hb[2]),
-                            ProcessInput(hb[3])
-                        };
-                    } catch { continue; }
+            var lineEmpty = new Regex(@"^\s*$");
+            var parseLine = new Regex(@"^\s*(.?\d+),\s*(.?\d+),\s*(.?\d+),\s*(.?\d+)(?:\s*$|\s*([cC]))");
 
-                    if (ValidCells(hb[4]) && "ty".Contains(char.ToLower(hb[4].TrimStart()[0])))
-                        colls.Add(new Collider(     b[0],b[1],b[2],b[3],false));
-                    else
-                        kbs.Add(new RectangleHitbox(b[0],b[1],b[2],b[3],false));
+            for (int i = 0; i < srcSett.ManualHitboxes.Length; i++) {
+                if (lineEmpty.IsMatch(srcSett.ManualHitboxes[i])) continue;
+
+                var parse = parseLine.Match(srcSett.ManualHitboxes[i]);
+
+                if (!parse.Success)
+                    throw new ArgumentException($"Invalid hitbox definition on line {i + 1}");
+
+                if (parse.Groups[5].Success) {
+                    colls.Add(new Collider(
+                        int.Parse(parse.Groups[1].Value),
+                        int.Parse(parse.Groups[2].Value),
+                        int.Parse(parse.Groups[3].Value),
+                        int.Parse(parse.Groups[4].Value)
+                    ));
+                    continue;
                 }
+
+                kbs.Add(new RectangleHitbox(
+                    int.Parse(parse.Groups[1].Value),
+                    int.Parse(parse.Groups[2].Value),
+                    int.Parse(parse.Groups[3].Value),
+                    int.Parse(parse.Groups[4].Value)
+                ));
             }
 
             Colliders = Colliders.Concat(colls).ToArray();
-            Killboxes = Killboxes.Concat(kbs  ).ToArray();
+            Killboxes = Killboxes.Concat(kbs).ToArray();
         }
+        
+        private static void GetCheckpoints()
+        {
+            var res = new List<Checkpoint>();
+            var lineEmpty = new Regex(@"^\s*$");
+            var parseLine = new Regex(@"^\s*(.?\d+),\s*(.?\d+),\s*(.?\d+),\s*(.?\d+)(?:\s*$|\s*([pP]))");
 
-        private static bool ValidCells(params string[] vals) => vals.All(val => val != null && val.Trim() != "");
-        public static int ProcessInput(string src) => (int)Math.Round(float.Parse(src.Trim().Replace(',', '.')));
+            for (int i = 0; i < srcSett.Checkpoints.Length; i++) {
+                if (lineEmpty.IsMatch(srcSett.Checkpoints[i])) continue;
+
+                var parse = parseLine.Match(srcSett.Checkpoints[i]);
+
+                if (!parse.Success)
+                    throw new ArgumentException($"Invalid checkpoint definition on line {i + 1}");
+
+                if (parse.Groups[5].Success) {
+                    res.Add(new Checkpoint(
+                        int.Parse(parse.Groups[1].Value) + 2,
+                        int.Parse(parse.Groups[2].Value) - 4,
+                        int.Parse(parse.Groups[3].Value) - 3,
+                        int.Parse(parse.Groups[4].Value) - 9
+                    ));
+                    continue;
+                }
+
+                res.Add(new Checkpoint(
+                    int.Parse(parse.Groups[1].Value),
+                    int.Parse(parse.Groups[2].Value),
+                    int.Parse(parse.Groups[3].Value),
+                    int.Parse(parse.Groups[4].Value)
+                ));
+            }
+            Checkpoints = res.ToArray();
+        }
     }
 }

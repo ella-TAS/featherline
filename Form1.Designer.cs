@@ -32,7 +32,6 @@ namespace Featherline
             this.btn_beginAlg = new System.Windows.Forms.Button();
             this.btn_selectInfoFile = new System.Windows.Forms.Button();
             this.txt_infoFile = new System.Windows.Forms.TextBox();
-            this.btn_infoExtraction = new System.Windows.Forms.Button();
             this.txt_initSolution = new System.Windows.Forms.RichTextBox();
             this.lbl_initSolution = new System.Windows.Forms.Label();
             this.lbl_population = new System.Windows.Forms.Label();
@@ -43,67 +42,59 @@ namespace Featherline
             this.lbl_survivorCount = new System.Windows.Forms.Label();
             this.num_framecount = new System.Windows.Forms.NumericUpDown();
             this.lbl_framecount = new System.Windows.Forms.Label();
-            this.grd_checkpoints = new System.Windows.Forms.DataGridView();
-            this.cpL = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cpU = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cpR = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cpD = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.lbl_checkpoints = new System.Windows.Forms.Label();
-            this.num_simplificationProbability = new System.Windows.Forms.NumericUpDown();
-            this.lbl_simplificationProbability = new System.Windows.Forms.Label();
-            this.num_mutationProbability = new System.Windows.Forms.NumericUpDown();
-            this.lbl_mutationProbability = new System.Windows.Forms.Label();
-            this.num_crossoverProbability = new System.Windows.Forms.NumericUpDown();
-            this.lbl_crossoverProb = new System.Windows.Forms.Label();
             this.num_mutChangeCount = new System.Windows.Forms.NumericUpDown();
             this.lbl_mutChangeCount = new System.Windows.Forms.Label();
             this.num_mutationMagnitude = new System.Windows.Forms.NumericUpDown();
             this.lbl_mutationMagnitude = new System.Windows.Forms.Label();
-            this.cbx_inputLinesMode = new System.Windows.Forms.CheckBox();
-            this.num_inputLineCount = new System.Windows.Forms.NumericUpDown();
-            this.lbl_inputLineCount = new System.Windows.Forms.Label();
             this.lbl_customSpinners = new System.Windows.Forms.Label();
             this.txt_customSpinners = new System.Windows.Forms.RichTextBox();
             this.cbx_avoidWalls = new System.Windows.Forms.CheckBox();
             this.cbx_enableSteepTurns = new System.Windows.Forms.CheckBox();
             this.lbl_manualHitboxes = new System.Windows.Forms.Label();
-            this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.grd_manualHitboxes = new System.Windows.Forms.DataGridView();
-            this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.infoTemplateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setupTASSnippetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.txt_checkpoints = new System.Windows.Forms.RichTextBox();
+            this.txt_customHitboxes = new System.Windows.Forms.RichTextBox();
+            this.cbx_timingTestFavDirectly = new System.Windows.Forms.CheckBox();
+            this.cbx_frameBasedOnly = new System.Windows.Forms.CheckBox();
+            this.num_gensPerTiming = new System.Windows.Forms.NumericUpDown();
+            this.lbl_gensPerTiming = new System.Windows.Forms.Label();
+            this.num_shuffleCount = new System.Windows.Forms.NumericUpDown();
+            this.lbl_shuffleCount = new System.Windows.Forms.Label();
+            this.num_maxThreadCount = new System.Windows.Forms.NumericUpDown();
+            this.lbl_maxThreadCount = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.num_population)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_generations)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_survivorCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_framecount)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.grd_checkpoints)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_simplificationProbability)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_mutationProbability)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_crossoverProbability)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_mutChangeCount)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_mutationMagnitude)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_inputLineCount)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.grd_manualHitboxes)).BeginInit();
+            this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.num_gensPerTiming)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_shuffleCount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_maxThreadCount)).BeginInit();
             this.SuspendLayout();
             // 
             // btn_beginAlg
             // 
             this.btn_beginAlg.BackColor = System.Drawing.Color.LightSteelBlue;
-            this.btn_beginAlg.Location = new System.Drawing.Point(12, 12);
+            this.btn_beginAlg.Location = new System.Drawing.Point(14, 38);
             this.btn_beginAlg.Name = "btn_beginAlg";
-            this.btn_beginAlg.Size = new System.Drawing.Size(123, 63);
+            this.btn_beginAlg.Size = new System.Drawing.Size(123, 42);
             this.btn_beginAlg.TabIndex = 0;
-            this.btn_beginAlg.Text = "Run Genetic Algorithm";
+            this.btn_beginAlg.Text = "Run Algorithm";
             this.btn_beginAlg.UseVisualStyleBackColor = false;
             this.btn_beginAlg.Click += new System.EventHandler(this.btn_beginAlg_Click);
             // 
             // btn_selectInfoFile
             // 
-            this.btn_selectInfoFile.Location = new System.Drawing.Point(360, 12);
+            this.btn_selectInfoFile.Location = new System.Drawing.Point(147, 38);
             this.btn_selectInfoFile.Name = "btn_selectInfoFile";
-            this.btn_selectInfoFile.Size = new System.Drawing.Size(223, 39);
+            this.btn_selectInfoFile.Size = new System.Drawing.Size(223, 42);
             this.btn_selectInfoFile.TabIndex = 2;
             this.btn_selectInfoFile.Text = "Select information Source File";
             this.btn_selectInfoFile.UseVisualStyleBackColor = true;
@@ -111,34 +102,24 @@ namespace Featherline
             // 
             // txt_infoFile
             // 
-            this.txt_infoFile.Location = new System.Drawing.Point(595, 19);
+            this.txt_infoFile.Location = new System.Drawing.Point(382, 47);
             this.txt_infoFile.Name = "txt_infoFile";
             this.txt_infoFile.ReadOnly = true;
-            this.txt_infoFile.Size = new System.Drawing.Size(197, 23);
+            this.txt_infoFile.Size = new System.Drawing.Size(203, 23);
             this.txt_infoFile.TabIndex = 9;
-            // 
-            // btn_infoExtraction
-            // 
-            this.btn_infoExtraction.Location = new System.Drawing.Point(145, 12);
-            this.btn_infoExtraction.Name = "btn_infoExtraction";
-            this.btn_infoExtraction.Size = new System.Drawing.Size(204, 39);
-            this.btn_infoExtraction.TabIndex = 14;
-            this.btn_infoExtraction.Text = "Prepare Info Extraction";
-            this.btn_infoExtraction.UseVisualStyleBackColor = true;
-            this.btn_infoExtraction.Click += new System.EventHandler(this.btn_infoExtraction_Click);
             // 
             // txt_initSolution
             // 
-            this.txt_initSolution.Location = new System.Drawing.Point(401, 74);
+            this.txt_initSolution.Location = new System.Drawing.Point(225, 103);
             this.txt_initSolution.Name = "txt_initSolution";
-            this.txt_initSolution.Size = new System.Drawing.Size(134, 354);
+            this.txt_initSolution.Size = new System.Drawing.Size(136, 354);
             this.txt_initSolution.TabIndex = 17;
             this.txt_initSolution.Text = "";
             // 
             // lbl_initSolution
             // 
             this.lbl_initSolution.AutoSize = true;
-            this.lbl_initSolution.Location = new System.Drawing.Point(404, 54);
+            this.lbl_initSolution.Location = new System.Drawing.Point(229, 83);
             this.lbl_initSolution.Name = "lbl_initSolution";
             this.lbl_initSolution.Size = new System.Drawing.Size(129, 15);
             this.lbl_initSolution.TabIndex = 18;
@@ -147,7 +128,7 @@ namespace Featherline
             // lbl_population
             // 
             this.lbl_population.AutoSize = true;
-            this.lbl_population.Location = new System.Drawing.Point(40, 88);
+            this.lbl_population.Location = new System.Drawing.Point(624, 37);
             this.lbl_population.Name = "lbl_population";
             this.lbl_population.Size = new System.Drawing.Size(65, 15);
             this.lbl_population.TabIndex = 19;
@@ -155,7 +136,7 @@ namespace Featherline
             // 
             // num_population
             // 
-            this.num_population.Location = new System.Drawing.Point(24, 106);
+            this.num_population.Location = new System.Drawing.Point(607, 55);
             this.num_population.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -167,7 +148,7 @@ namespace Featherline
             0,
             0});
             this.num_population.Name = "num_population";
-            this.num_population.Size = new System.Drawing.Size(98, 23);
+            this.num_population.Size = new System.Drawing.Size(99, 23);
             this.num_population.TabIndex = 20;
             this.num_population.Value = new decimal(new int[] {
             50,
@@ -178,14 +159,14 @@ namespace Featherline
             // 
             // num_generations
             // 
-            this.num_generations.Location = new System.Drawing.Point(24, 193);
+            this.num_generations.Location = new System.Drawing.Point(607, 131);
             this.num_generations.Maximum = new decimal(new int[] {
             999999,
             0,
             0,
             0});
             this.num_generations.Name = "num_generations";
-            this.num_generations.Size = new System.Drawing.Size(98, 23);
+            this.num_generations.Size = new System.Drawing.Size(99, 23);
             this.num_generations.TabIndex = 22;
             this.num_generations.Value = new decimal(new int[] {
             5000,
@@ -196,7 +177,7 @@ namespace Featherline
             // lbl_generations
             // 
             this.lbl_generations.AutoSize = true;
-            this.lbl_generations.Location = new System.Drawing.Point(37, 175);
+            this.lbl_generations.Location = new System.Drawing.Point(622, 113);
             this.lbl_generations.Name = "lbl_generations";
             this.lbl_generations.Size = new System.Drawing.Size(70, 15);
             this.lbl_generations.TabIndex = 21;
@@ -204,14 +185,14 @@ namespace Featherline
             // 
             // num_survivorCount
             // 
-            this.num_survivorCount.Location = new System.Drawing.Point(25, 282);
+            this.num_survivorCount.Location = new System.Drawing.Point(607, 207);
             this.num_survivorCount.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
             this.num_survivorCount.Name = "num_survivorCount";
-            this.num_survivorCount.Size = new System.Drawing.Size(97, 23);
+            this.num_survivorCount.Size = new System.Drawing.Size(99, 23);
             this.num_survivorCount.TabIndex = 24;
             this.num_survivorCount.Value = new decimal(new int[] {
             20,
@@ -222,7 +203,7 @@ namespace Featherline
             // lbl_survivorCount
             // 
             this.lbl_survivorCount.AutoSize = true;
-            this.lbl_survivorCount.Location = new System.Drawing.Point(34, 264);
+            this.lbl_survivorCount.Location = new System.Drawing.Point(617, 189);
             this.lbl_survivorCount.Name = "lbl_survivorCount";
             this.lbl_survivorCount.Size = new System.Drawing.Size(79, 15);
             this.lbl_survivorCount.TabIndex = 23;
@@ -230,7 +211,7 @@ namespace Featherline
             // 
             // num_framecount
             // 
-            this.num_framecount.Location = new System.Drawing.Point(24, 373);
+            this.num_framecount.Location = new System.Drawing.Point(607, 283);
             this.num_framecount.Maximum = new decimal(new int[] {
             9999,
             0,
@@ -242,7 +223,7 @@ namespace Featherline
             0,
             0});
             this.num_framecount.Name = "num_framecount";
-            this.num_framecount.Size = new System.Drawing.Size(97, 23);
+            this.num_framecount.Size = new System.Drawing.Size(98, 23);
             this.num_framecount.TabIndex = 26;
             this.num_framecount.Value = new decimal(new int[] {
             120,
@@ -254,171 +235,24 @@ namespace Featherline
             // 
             this.lbl_framecount.AccessibleDescription = "asdfasdfasdf";
             this.lbl_framecount.AutoSize = true;
-            this.lbl_framecount.Location = new System.Drawing.Point(24, 355);
+            this.lbl_framecount.Location = new System.Drawing.Point(608, 265);
             this.lbl_framecount.Name = "lbl_framecount";
             this.lbl_framecount.Size = new System.Drawing.Size(97, 15);
             this.lbl_framecount.TabIndex = 25;
             this.lbl_framecount.Text = "Max Framecount";
             // 
-            // grd_checkpoints
-            // 
-            this.grd_checkpoints.AllowUserToResizeColumns = false;
-            this.grd_checkpoints.AllowUserToResizeRows = false;
-            this.grd_checkpoints.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grd_checkpoints.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.cpL,
-            this.cpU,
-            this.cpR,
-            this.cpD});
-            this.grd_checkpoints.Location = new System.Drawing.Point(145, 75);
-            this.grd_checkpoints.MultiSelect = false;
-            this.grd_checkpoints.Name = "grd_checkpoints";
-            this.grd_checkpoints.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            this.grd_checkpoints.RowTemplate.Height = 25;
-            this.grd_checkpoints.Size = new System.Drawing.Size(243, 354);
-            this.grd_checkpoints.TabIndex = 27;
-            // 
-            // cpL
-            // 
-            this.cpL.Frozen = true;
-            this.cpL.HeaderText = "L Edge";
-            this.cpL.Name = "cpL";
-            this.cpL.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.cpL.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.cpL.Width = 50;
-            // 
-            // cpU
-            // 
-            this.cpU.Frozen = true;
-            this.cpU.HeaderText = "U Edge";
-            this.cpU.Name = "cpU";
-            this.cpU.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.cpU.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.cpU.Width = 50;
-            // 
-            // cpR
-            // 
-            this.cpR.Frozen = true;
-            this.cpR.HeaderText = "R Edge";
-            this.cpR.Name = "cpR";
-            this.cpR.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.cpR.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.cpR.Width = 50;
-            // 
-            // cpD
-            // 
-            this.cpD.Frozen = true;
-            this.cpD.HeaderText = "D Edge";
-            this.cpD.Name = "cpD";
-            this.cpD.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.cpD.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.cpD.Width = 50;
-            // 
             // lbl_checkpoints
             // 
             this.lbl_checkpoints.AutoSize = true;
-            this.lbl_checkpoints.Location = new System.Drawing.Point(145, 56);
+            this.lbl_checkpoints.Location = new System.Drawing.Point(16, 85);
             this.lbl_checkpoints.Name = "lbl_checkpoints";
             this.lbl_checkpoints.Size = new System.Drawing.Size(115, 15);
             this.lbl_checkpoints.TabIndex = 29;
             this.lbl_checkpoints.Text = "Feather Checkpoints";
             // 
-            // num_simplificationProbability
-            // 
-            this.num_simplificationProbability.Location = new System.Drawing.Point(351, 460);
-            this.num_simplificationProbability.Maximum = new decimal(new int[] {
-            999,
-            0,
-            0,
-            0});
-            this.num_simplificationProbability.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.num_simplificationProbability.Name = "num_simplificationProbability";
-            this.num_simplificationProbability.Size = new System.Drawing.Size(97, 23);
-            this.num_simplificationProbability.TabIndex = 35;
-            this.num_simplificationProbability.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // lbl_simplificationProbability
-            // 
-            this.lbl_simplificationProbability.AutoSize = true;
-            this.lbl_simplificationProbability.Location = new System.Drawing.Point(329, 442);
-            this.lbl_simplificationProbability.Name = "lbl_simplificationProbability";
-            this.lbl_simplificationProbability.Size = new System.Drawing.Size(140, 15);
-            this.lbl_simplificationProbability.TabIndex = 34;
-            this.lbl_simplificationProbability.Text = "Simplification Probability";
-            // 
-            // num_mutationProbability
-            // 
-            this.num_mutationProbability.Location = new System.Drawing.Point(24, 460);
-            this.num_mutationProbability.Maximum = new decimal(new int[] {
-            999,
-            0,
-            0,
-            0});
-            this.num_mutationProbability.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.num_mutationProbability.Name = "num_mutationProbability";
-            this.num_mutationProbability.Size = new System.Drawing.Size(98, 23);
-            this.num_mutationProbability.TabIndex = 33;
-            this.num_mutationProbability.Value = new decimal(new int[] {
-            2,
-            0,
-            0,
-            0});
-            // 
-            // lbl_mutationProbability
-            // 
-            this.lbl_mutationProbability.AutoSize = true;
-            this.lbl_mutationProbability.Location = new System.Drawing.Point(15, 442);
-            this.lbl_mutationProbability.Name = "lbl_mutationProbability";
-            this.lbl_mutationProbability.Size = new System.Drawing.Size(116, 15);
-            this.lbl_mutationProbability.TabIndex = 32;
-            this.lbl_mutationProbability.Text = "Mutation Probability";
-            // 
-            // num_crossoverProbability
-            // 
-            this.num_crossoverProbability.Location = new System.Drawing.Point(184, 460);
-            this.num_crossoverProbability.Maximum = new decimal(new int[] {
-            999,
-            0,
-            0,
-            0});
-            this.num_crossoverProbability.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.num_crossoverProbability.Name = "num_crossoverProbability";
-            this.num_crossoverProbability.Size = new System.Drawing.Size(98, 23);
-            this.num_crossoverProbability.TabIndex = 31;
-            this.num_crossoverProbability.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            // 
-            // lbl_crossoverProb
-            // 
-            this.lbl_crossoverProb.AutoSize = true;
-            this.lbl_crossoverProb.Location = new System.Drawing.Point(173, 442);
-            this.lbl_crossoverProb.Name = "lbl_crossoverProb";
-            this.lbl_crossoverProb.Size = new System.Drawing.Size(119, 15);
-            this.lbl_crossoverProb.TabIndex = 30;
-            this.lbl_crossoverProb.Text = "Crossover Probability";
-            // 
             // num_mutChangeCount
             // 
-            this.num_mutChangeCount.Location = new System.Drawing.Point(676, 460);
+            this.num_mutChangeCount.Location = new System.Drawing.Point(607, 435);
             this.num_mutChangeCount.Maximum = new decimal(new int[] {
             20,
             0,
@@ -430,7 +264,7 @@ namespace Featherline
             0,
             0});
             this.num_mutChangeCount.Name = "num_mutChangeCount";
-            this.num_mutChangeCount.Size = new System.Drawing.Size(97, 23);
+            this.num_mutChangeCount.Size = new System.Drawing.Size(99, 23);
             this.num_mutChangeCount.TabIndex = 39;
             this.num_mutChangeCount.Value = new decimal(new int[] {
             5,
@@ -441,7 +275,7 @@ namespace Featherline
             // lbl_mutChangeCount
             // 
             this.lbl_mutChangeCount.AutoSize = true;
-            this.lbl_mutChangeCount.Location = new System.Drawing.Point(655, 442);
+            this.lbl_mutChangeCount.Location = new System.Drawing.Point(587, 417);
             this.lbl_mutChangeCount.Name = "lbl_mutChangeCount";
             this.lbl_mutChangeCount.Size = new System.Drawing.Size(138, 15);
             this.lbl_mutChangeCount.TabIndex = 38;
@@ -454,7 +288,7 @@ namespace Featherline
             0,
             0,
             65536});
-            this.num_mutationMagnitude.Location = new System.Drawing.Point(515, 460);
+            this.num_mutationMagnitude.Location = new System.Drawing.Point(607, 359);
             this.num_mutationMagnitude.Maximum = new decimal(new int[] {
             99,
             0,
@@ -466,7 +300,7 @@ namespace Featherline
             0,
             0});
             this.num_mutationMagnitude.Name = "num_mutationMagnitude";
-            this.num_mutationMagnitude.Size = new System.Drawing.Size(98, 23);
+            this.num_mutationMagnitude.Size = new System.Drawing.Size(99, 23);
             this.num_mutationMagnitude.TabIndex = 37;
             this.num_mutationMagnitude.Value = new decimal(new int[] {
             10,
@@ -477,75 +311,33 @@ namespace Featherline
             // lbl_mutationMagnitude
             // 
             this.lbl_mutationMagnitude.AutoSize = true;
-            this.lbl_mutationMagnitude.Location = new System.Drawing.Point(506, 442);
+            this.lbl_mutationMagnitude.Location = new System.Drawing.Point(598, 341);
             this.lbl_mutationMagnitude.Name = "lbl_mutationMagnitude";
             this.lbl_mutationMagnitude.Size = new System.Drawing.Size(117, 15);
             this.lbl_mutationMagnitude.TabIndex = 36;
             this.lbl_mutationMagnitude.Text = "Mutation Magnitude";
             // 
-            // cbx_inputLinesMode
-            // 
-            this.cbx_inputLinesMode.AutoSize = true;
-            this.cbx_inputLinesMode.Location = new System.Drawing.Point(544, 510);
-            this.cbx_inputLinesMode.Name = "cbx_inputLinesMode";
-            this.cbx_inputLinesMode.Size = new System.Drawing.Size(193, 19);
-            this.cbx_inputLinesMode.TabIndex = 41;
-            this.cbx_inputLinesMode.Text = "Limited Input Lines mode (WIP)";
-            this.cbx_inputLinesMode.UseVisualStyleBackColor = true;
-            this.cbx_inputLinesMode.CheckedChanged += new System.EventHandler(this.cbx_inputLinesMode_CheckedChanged);
-            // 
-            // num_inputLineCount
-            // 
-            this.num_inputLineCount.Location = new System.Drawing.Point(544, 554);
-            this.num_inputLineCount.Maximum = new decimal(new int[] {
-            9999,
-            0,
-            0,
-            0});
-            this.num_inputLineCount.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.num_inputLineCount.Name = "num_inputLineCount";
-            this.num_inputLineCount.Size = new System.Drawing.Size(97, 23);
-            this.num_inputLineCount.TabIndex = 42;
-            this.num_inputLineCount.Value = new decimal(new int[] {
-            12,
-            0,
-            0,
-            0});
-            // 
-            // lbl_inputLineCount
-            // 
-            this.lbl_inputLineCount.AutoSize = true;
-            this.lbl_inputLineCount.Location = new System.Drawing.Point(544, 536);
-            this.lbl_inputLineCount.Name = "lbl_inputLineCount";
-            this.lbl_inputLineCount.Size = new System.Drawing.Size(96, 15);
-            this.lbl_inputLineCount.TabIndex = 43;
-            this.lbl_inputLineCount.Text = "Input Line Count";
-            // 
             // lbl_customSpinners
             // 
             this.lbl_customSpinners.AutoSize = true;
-            this.lbl_customSpinners.Location = new System.Drawing.Point(24, 497);
+            this.lbl_customSpinners.Location = new System.Drawing.Point(11, 467);
             this.lbl_customSpinners.Name = "lbl_customSpinners";
-            this.lbl_customSpinners.Size = new System.Drawing.Size(293, 15);
+            this.lbl_customSpinners.Size = new System.Drawing.Size(180, 15);
             this.lbl_customSpinners.TabIndex = 44;
-            this.lbl_customSpinners.Text = "Precise Custom Spinner Name(s) (likely not necessary)";
+            this.lbl_customSpinners.Text = "Precise Custom Spinner Name(s)";
             // 
             // txt_customSpinners
             // 
-            this.txt_customSpinners.Location = new System.Drawing.Point(25, 515);
+            this.txt_customSpinners.Location = new System.Drawing.Point(12, 485);
             this.txt_customSpinners.Name = "txt_customSpinners";
-            this.txt_customSpinners.Size = new System.Drawing.Size(275, 67);
+            this.txt_customSpinners.Size = new System.Drawing.Size(184, 55);
             this.txt_customSpinners.TabIndex = 45;
             this.txt_customSpinners.Text = "";
             // 
             // cbx_avoidWalls
             // 
             this.cbx_avoidWalls.AutoSize = true;
-            this.cbx_avoidWalls.Location = new System.Drawing.Point(326, 522);
+            this.cbx_avoidWalls.Location = new System.Drawing.Point(207, 467);
             this.cbx_avoidWalls.Name = "cbx_avoidWalls";
             this.cbx_avoidWalls.Size = new System.Drawing.Size(132, 19);
             this.cbx_avoidWalls.TabIndex = 46;
@@ -555,7 +347,7 @@ namespace Featherline
             // cbx_enableSteepTurns
             // 
             this.cbx_enableSteepTurns.AutoSize = true;
-            this.cbx_enableSteepTurns.Location = new System.Drawing.Point(326, 558);
+            this.cbx_enableSteepTurns.Location = new System.Drawing.Point(207, 496);
             this.cbx_enableSteepTurns.Name = "cbx_enableSteepTurns";
             this.cbx_enableSteepTurns.Size = new System.Drawing.Size(153, 19);
             this.cbx_enableSteepTurns.TabIndex = 47;
@@ -565,112 +357,208 @@ namespace Featherline
             // lbl_manualHitboxes
             // 
             this.lbl_manualHitboxes.AutoSize = true;
-            this.lbl_manualHitboxes.Location = new System.Drawing.Point(549, 56);
+            this.lbl_manualHitboxes.Location = new System.Drawing.Point(381, 85);
             this.lbl_manualHitboxes.Name = "lbl_manualHitboxes";
             this.lbl_manualHitboxes.Size = new System.Drawing.Size(171, 15);
             this.lbl_manualHitboxes.TabIndex = 49;
             this.lbl_manualHitboxes.Text = "Custom Killboxes and Colliders";
             // 
-            // dataGridViewTextBoxColumn1
+            // menuStrip1
             // 
-            this.dataGridViewTextBoxColumn1.Frozen = true;
-            this.dataGridViewTextBoxColumn1.HeaderText = "L Edge";
-            this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
-            this.dataGridViewTextBoxColumn1.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn1.Width = 50;
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.helpToolStripMenuItem,
+            this.copyToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(729, 24);
+            this.menuStrip1.TabIndex = 51;
+            this.menuStrip1.Text = "menuStrip1";
             // 
-            // grd_manualHitboxes
+            // helpToolStripMenuItem
             // 
-            this.grd_manualHitboxes.AllowUserToResizeColumns = false;
-            this.grd_manualHitboxes.AllowUserToResizeRows = false;
-            this.grd_manualHitboxes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grd_manualHitboxes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.dataGridViewTextBoxColumn2,
-            this.dataGridViewTextBoxColumn3,
-            this.dataGridViewTextBoxColumn4,
-            this.dataGridViewTextBoxColumn5,
-            this.Column1});
-            this.grd_manualHitboxes.Location = new System.Drawing.Point(549, 74);
-            this.grd_manualHitboxes.MultiSelect = false;
-            this.grd_manualHitboxes.Name = "grd_manualHitboxes";
-            this.grd_manualHitboxes.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            this.grd_manualHitboxes.RowTemplate.Height = 25;
-            this.grd_manualHitboxes.Size = new System.Drawing.Size(307, 354);
-            this.grd_manualHitboxes.TabIndex = 50;
+            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Text = "Help";
+            this.helpToolStripMenuItem.Click += new System.EventHandler(this.helpToolStripMenuItem_Click);
             // 
-            // dataGridViewTextBoxColumn2
+            // copyToolStripMenuItem
             // 
-            this.dataGridViewTextBoxColumn2.Frozen = true;
-            this.dataGridViewTextBoxColumn2.HeaderText = "L Edge";
-            this.dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
-            this.dataGridViewTextBoxColumn2.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn2.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn2.Width = 50;
+            this.copyToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.infoTemplateToolStripMenuItem,
+            this.setupTASSnippetToolStripMenuItem});
+            this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.copyToolStripMenuItem.Text = "Copy";
             // 
-            // dataGridViewTextBoxColumn3
+            // infoTemplateToolStripMenuItem
             // 
-            this.dataGridViewTextBoxColumn3.Frozen = true;
-            this.dataGridViewTextBoxColumn3.HeaderText = "U Edge";
-            this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
-            this.dataGridViewTextBoxColumn3.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn3.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn3.Width = 50;
+            this.infoTemplateToolStripMenuItem.Name = "infoTemplateToolStripMenuItem";
+            this.infoTemplateToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.infoTemplateToolStripMenuItem.Text = "Info Template";
+            this.infoTemplateToolStripMenuItem.Click += new System.EventHandler(this.infoTemplateToolStripMenuItem_Click);
             // 
-            // dataGridViewTextBoxColumn4
+            // setupTASSnippetToolStripMenuItem
             // 
-            this.dataGridViewTextBoxColumn4.Frozen = true;
-            this.dataGridViewTextBoxColumn4.HeaderText = "R Edge";
-            this.dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
-            this.dataGridViewTextBoxColumn4.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn4.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn4.Width = 50;
+            this.setupTASSnippetToolStripMenuItem.Name = "setupTASSnippetToolStripMenuItem";
+            this.setupTASSnippetToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
+            this.setupTASSnippetToolStripMenuItem.Text = "Setup TAS Snippet";
+            this.setupTASSnippetToolStripMenuItem.Click += new System.EventHandler(this.setupTASSnippetToolStripMenuItem_Click);
             // 
-            // dataGridViewTextBoxColumn5
+            // txt_checkpoints
             // 
-            this.dataGridViewTextBoxColumn5.Frozen = true;
-            this.dataGridViewTextBoxColumn5.HeaderText = "D Edge";
-            this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
-            this.dataGridViewTextBoxColumn5.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.dataGridViewTextBoxColumn5.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.dataGridViewTextBoxColumn5.Width = 50;
+            this.txt_checkpoints.Location = new System.Drawing.Point(12, 103);
+            this.txt_checkpoints.Name = "txt_checkpoints";
+            this.txt_checkpoints.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.txt_checkpoints.Size = new System.Drawing.Size(199, 354);
+            this.txt_checkpoints.TabIndex = 52;
+            this.txt_checkpoints.Text = "";
             // 
-            // Column1
+            // txt_customHitboxes
             // 
-            this.Column1.Frozen = true;
-            this.Column1.HeaderText = "Is Collider";
-            this.Column1.Name = "Column1";
-            this.Column1.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.Column1.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
-            this.Column1.Width = 65;
+            this.txt_customHitboxes.Location = new System.Drawing.Point(376, 103);
+            this.txt_customHitboxes.Name = "txt_customHitboxes";
+            this.txt_customHitboxes.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.txt_customHitboxes.Size = new System.Drawing.Size(208, 354);
+            this.txt_customHitboxes.TabIndex = 53;
+            this.txt_customHitboxes.Text = "";
+            // 
+            // cbx_timingTestFavDirectly
+            // 
+            this.cbx_timingTestFavDirectly.AutoSize = true;
+            this.cbx_timingTestFavDirectly.Location = new System.Drawing.Point(365, 467);
+            this.cbx_timingTestFavDirectly.Name = "cbx_timingTestFavDirectly";
+            this.cbx_timingTestFavDirectly.Size = new System.Drawing.Size(221, 19);
+            this.cbx_timingTestFavDirectly.TabIndex = 54;
+            this.cbx_timingTestFavDirectly.Text = "Test Timings On Initial Inputs Directly";
+            this.cbx_timingTestFavDirectly.UseVisualStyleBackColor = true;
+            // 
+            // cbx_frameBasedOnly
+            // 
+            this.cbx_frameBasedOnly.AutoSize = true;
+            this.cbx_frameBasedOnly.Location = new System.Drawing.Point(207, 525);
+            this.cbx_frameBasedOnly.Name = "cbx_frameBasedOnly";
+            this.cbx_frameBasedOnly.Size = new System.Drawing.Size(200, 19);
+            this.cbx_frameBasedOnly.TabIndex = 55;
+            this.cbx_frameBasedOnly.Text = "Use Frame Based Algorithm Only";
+            this.cbx_frameBasedOnly.UseVisualStyleBackColor = true;
+            this.cbx_frameBasedOnly.CheckedChanged += new System.EventHandler(this.cbx_frameBasedOnly_CheckedChanged);
+            // 
+            // num_gensPerTiming
+            // 
+            this.num_gensPerTiming.Location = new System.Drawing.Point(607, 505);
+            this.num_gensPerTiming.Maximum = new decimal(new int[] {
+            999999,
+            0,
+            0,
+            0});
+            this.num_gensPerTiming.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_gensPerTiming.Name = "num_gensPerTiming";
+            this.num_gensPerTiming.Size = new System.Drawing.Size(99, 23);
+            this.num_gensPerTiming.TabIndex = 56;
+            this.num_gensPerTiming.Value = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            // 
+            // lbl_gensPerTiming
+            // 
+            this.lbl_gensPerTiming.AutoSize = true;
+            this.lbl_gensPerTiming.Location = new System.Drawing.Point(592, 487);
+            this.lbl_gensPerTiming.Name = "lbl_gensPerTiming";
+            this.lbl_gensPerTiming.Size = new System.Drawing.Size(129, 15);
+            this.lbl_gensPerTiming.TabIndex = 57;
+            this.lbl_gensPerTiming.Text = "Gens Per Tested Timing";
+            // 
+            // num_shuffleCount
+            // 
+            this.num_shuffleCount.Location = new System.Drawing.Point(432, 517);
+            this.num_shuffleCount.Name = "num_shuffleCount";
+            this.num_shuffleCount.Size = new System.Drawing.Size(120, 23);
+            this.num_shuffleCount.TabIndex = 58;
+            this.num_shuffleCount.Value = new decimal(new int[] {
+            2,
+            0,
+            0,
+            0});
+            // 
+            // lbl_shuffleCount
+            // 
+            this.lbl_shuffleCount.AutoSize = true;
+            this.lbl_shuffleCount.Location = new System.Drawing.Point(432, 499);
+            this.lbl_shuffleCount.Name = "lbl_shuffleCount";
+            this.lbl_shuffleCount.Size = new System.Drawing.Size(120, 15);
+            this.lbl_shuffleCount.TabIndex = 59;
+            this.lbl_shuffleCount.Text = "Timing Shuffle Count";
+            // 
+            // num_maxThreadCount
+            // 
+            this.num_maxThreadCount.DecimalPlaces = 1;
+            this.num_maxThreadCount.Increment = new decimal(new int[] {
+            11,
+            0,
+            0,
+            65536});
+            this.num_maxThreadCount.Location = new System.Drawing.Point(509, 590);
+            this.num_maxThreadCount.Maximum = new decimal(new int[] {
+            999,
+            0,
+            0,
+            0});
+            this.num_maxThreadCount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+            this.num_maxThreadCount.Name = "num_maxThreadCount";
+            this.num_maxThreadCount.Size = new System.Drawing.Size(120, 23);
+            this.num_maxThreadCount.TabIndex = 60;
+            this.num_maxThreadCount.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_maxThreadCount.ValueChanged += new System.EventHandler(this.num_maxThreadCount_ValueChanged);
+            // 
+            // lbl_maxThreadCount
+            // 
+            this.lbl_maxThreadCount.AutoSize = true;
+            this.lbl_maxThreadCount.Location = new System.Drawing.Point(517, 569);
+            this.lbl_maxThreadCount.Name = "lbl_maxThreadCount";
+            this.lbl_maxThreadCount.Size = new System.Drawing.Size(105, 15);
+            this.lbl_maxThreadCount.TabIndex = 61;
+            this.lbl_maxThreadCount.Text = "Max Thread Count";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            this.ClientSize = new System.Drawing.Size(869, 596);
-            this.Controls.Add(this.grd_manualHitboxes);
+            this.ClientSize = new System.Drawing.Size(729, 625);
+            this.Controls.Add(this.lbl_maxThreadCount);
+            this.Controls.Add(this.num_maxThreadCount);
+            this.Controls.Add(this.lbl_shuffleCount);
+            this.Controls.Add(this.num_shuffleCount);
+            this.Controls.Add(this.lbl_gensPerTiming);
+            this.Controls.Add(this.num_gensPerTiming);
+            this.Controls.Add(this.cbx_frameBasedOnly);
+            this.Controls.Add(this.cbx_timingTestFavDirectly);
+            this.Controls.Add(this.txt_customHitboxes);
+            this.Controls.Add(this.txt_checkpoints);
             this.Controls.Add(this.lbl_manualHitboxes);
             this.Controls.Add(this.cbx_enableSteepTurns);
             this.Controls.Add(this.cbx_avoidWalls);
             this.Controls.Add(this.txt_customSpinners);
             this.Controls.Add(this.lbl_customSpinners);
-            this.Controls.Add(this.lbl_inputLineCount);
-            this.Controls.Add(this.num_inputLineCount);
-            this.Controls.Add(this.cbx_inputLinesMode);
             this.Controls.Add(this.num_mutChangeCount);
             this.Controls.Add(this.lbl_mutChangeCount);
             this.Controls.Add(this.num_mutationMagnitude);
             this.Controls.Add(this.lbl_mutationMagnitude);
-            this.Controls.Add(this.num_simplificationProbability);
-            this.Controls.Add(this.lbl_simplificationProbability);
-            this.Controls.Add(this.num_mutationProbability);
-            this.Controls.Add(this.lbl_mutationProbability);
-            this.Controls.Add(this.num_crossoverProbability);
-            this.Controls.Add(this.lbl_crossoverProb);
             this.Controls.Add(this.lbl_checkpoints);
-            this.Controls.Add(this.grd_checkpoints);
             this.Controls.Add(this.num_framecount);
             this.Controls.Add(this.lbl_framecount);
             this.Controls.Add(this.num_survivorCount);
@@ -681,11 +569,12 @@ namespace Featherline
             this.Controls.Add(this.lbl_population);
             this.Controls.Add(this.lbl_initSolution);
             this.Controls.Add(this.txt_initSolution);
-            this.Controls.Add(this.btn_infoExtraction);
             this.Controls.Add(this.txt_infoFile);
             this.Controls.Add(this.btn_selectInfoFile);
             this.Controls.Add(this.btn_beginAlg);
+            this.Controls.Add(this.menuStrip1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "Featherline";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -693,14 +582,13 @@ namespace Featherline
             ((System.ComponentModel.ISupportInitialize)(this.num_generations)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_survivorCount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_framecount)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.grd_checkpoints)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_simplificationProbability)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_mutationProbability)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_crossoverProbability)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_mutChangeCount)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_mutationMagnitude)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.num_inputLineCount)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.grd_manualHitboxes)).EndInit();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.num_gensPerTiming)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_shuffleCount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_maxThreadCount)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -711,7 +599,6 @@ namespace Featherline
         private System.Windows.Forms.Button btn_beginAlg;
         private System.Windows.Forms.Button btn_selectInfoFile;
         private System.Windows.Forms.TextBox txt_infoFile;
-        private System.Windows.Forms.Button btn_infoExtraction;
         private System.Windows.Forms.RichTextBox txt_initSolution;
         private System.Windows.Forms.Label lbl_initSolution;
         private System.Windows.Forms.Label lbl_population;
@@ -722,38 +609,31 @@ namespace Featherline
         private System.Windows.Forms.Label lbl_survivorCount;
         private System.Windows.Forms.NumericUpDown num_framecount;
         private System.Windows.Forms.Label lbl_framecount;
-        private System.Windows.Forms.DataGridView grd_checkpoints;
         private System.Windows.Forms.Label lbl_checkpoints;
-        private System.Windows.Forms.NumericUpDown num_simplificationProbability;
-        private System.Windows.Forms.Label lbl_simplificationProbability;
-        private System.Windows.Forms.NumericUpDown num_mutationProbability;
-        private System.Windows.Forms.Label lbl_mutationProbability;
-        private System.Windows.Forms.NumericUpDown num_crossoverProbability;
-        private System.Windows.Forms.Label lbl_crossoverProb;
         private System.Windows.Forms.NumericUpDown num_mutChangeCount;
         private System.Windows.Forms.Label lbl_mutChangeCount;
         private System.Windows.Forms.NumericUpDown num_mutationMagnitude;
         private System.Windows.Forms.Label lbl_mutationMagnitude;
-        private System.Windows.Forms.CheckBox cbx_inputLinesMode;
-        private System.Windows.Forms.NumericUpDown num_inputLineCount;
-        private System.Windows.Forms.Label lbl_inputLineCount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cpL;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cpU;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cpR;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cpD;
         private System.Windows.Forms.Label lbl_customSpinners;
         private System.Windows.Forms.RichTextBox txt_customSpinners;
-        private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.CheckBox cbx_avoidWalls;
         private System.Windows.Forms.CheckBox cbx_enableSteepTurns;
         private System.Windows.Forms.Label lbl_manualHitboxes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-        private System.Windows.Forms.DataGridView grd_manualHitboxes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        private System.Windows.Forms.RichTextBox txt_checkpoints;
+        private System.Windows.Forms.RichTextBox txt_customHitboxes;
+        private System.Windows.Forms.CheckBox cbx_timingTestFavDirectly;
+        private System.Windows.Forms.CheckBox cbx_frameBasedOnly;
+        private System.Windows.Forms.NumericUpDown num_gensPerTiming;
+        private System.Windows.Forms.Label lbl_gensPerTiming;
+        private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem infoTemplateToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem setupTASSnippetToolStripMenuItem;
+        private System.Windows.Forms.NumericUpDown num_shuffleCount;
+        private System.Windows.Forms.Label lbl_shuffleCount;
+        private System.Windows.Forms.NumericUpDown num_maxThreadCount;
+        private System.Windows.Forms.Label lbl_maxThreadCount;
     }
 }
 

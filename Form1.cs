@@ -19,7 +19,7 @@ namespace Featherline
 
         private void btn_beginAlg_Click(object sender, EventArgs e)
         {
-            BeginAlgorithm(this);
+            BeginAlgorithm(this, false);
         }
 
         private void btn_selectInfoFile_Click(object sender, EventArgs e)
@@ -78,6 +78,11 @@ namespace Featherline
                 num_maxThreadCount.Value = num_maxThreadCount.Value < 0 ? -1 : 1;
             }
             num_maxThreadCount.Value = Math.Round(num_maxThreadCount.Value);
+        }
+
+        private void logFlightOfInitialInputsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            BeginAlgorithm(this, true);
         }
     }
 }

@@ -25,35 +25,8 @@ namespace Featherline
 			while (si.f < ind.Length) {
 				RunFrame(ind[si.f]);
 				si.Print();
+				if (stop) si.checkpointsGotten = 0;
 			}
-
-			Console.ReadLine();
-		}
-
-		public void DebugCollision(int xMin, int yMin, int xMax, int yMax)
-        {
-			//int yOffset = 0;
-			//int xOffset = 0;
-			//si = new FState() { pos = new Vector2(100 + xOffset, 66 + yOffset) };
-			//si.UpdateIntPos();
-			//Console.WriteLine(Level.WindTriggers.Any(wt => wt.TouchingAsFeather(si.intPos)));
-
-			for (float y = yMin; y < yMax; y += 1) {
-				for (float x = xMin; x < xMax; x += 1) {
-					si.pos = new Vector2(x, y);
-					si.UpdateIntPos();
-					Console.Write(CollisionChar());
-				}
-				Console.WriteLine();
-			}
-
-			Console.ReadLine();
-
-			char CollisionChar()
-            {
-
-				return 'F';
-            }
 		}
 
 		private FState si;
@@ -77,9 +50,11 @@ namespace Featherline
 			else
 				LoadSavestate(ss);
 
-			while (si.f < frameCount) {
-				RunFrame(ind[si.f]);
-				if (stop) break;
+			if (si.checkpointsGotten < Level.Checkpoints.Length) {
+				while (si.f < frameCount) {
+					RunFrame(ind[si.f]);
+					if (stop) break;
+				}
 			}
 		}
 
@@ -159,8 +134,8 @@ namespace Featherline
 			return si.checkpointsGotten >= sett.Checkpoints.Length;
 		}
 
-		int turningStart = 0;
-		float angleBeforeTurn = 0;
+		int turningStart;
+		float angleBeforeTurn;
 		private void InputCleaning(bool forceClean = false)
 		{
 			if (cleaningInputs) {

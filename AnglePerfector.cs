@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,6 +21,8 @@ namespace Featherline
         private float precision;
 
         public static Savestate[] baseInfo;
+        public static bool baseInfoFinishes;
+        public static int[] baseInfoWallboops;
 
         private int optimizingAt;
 
@@ -29,7 +32,7 @@ namespace Featherline
             var improvedBorders = Enumerable.Repeat(true, timings.Length).ToArray();
 
             int farthestSurvival = startingAt - 1;
-            for (; optimizingAt < timings.Length; optimizingAt++) {
+            /*for (; optimizingAt < timings.Length; optimizingAt++) {
                 current = PerfectBorderAt(current, optimizingAt, out int survival);
                 farthestSurvival = Math.Max(farthestSurvival, survival);
 
@@ -43,7 +46,7 @@ namespace Featherline
                 if (improvedBorders.All(b => !b))
                     goto End;
             }
-            optimizingAt = 0;
+            optimizingAt = 0;*/
 
 
             for (int i = 0; i < 5; i++) {
@@ -151,9 +154,8 @@ namespace Featherline
 
                 anglesIEnum = anglesIEnum.Append(centerAngle);
 
-                if (upperBound <= MaxFrameSteer)
-                    anglesIEnum = anglesIEnum.Concat(
-                        Enumerable.Range(1, NodeBase - 1).Select(n => centerAngle + boundDiff * n / NodeBase));
+                anglesIEnum = anglesIEnum.Concat(
+                    Enumerable.Range(1, NodeBase - 1).Select(n => centerAngle + boundDiff * n / NodeBase));
             }
 
             var angles = anglesIEnum.Select(x => (float)Math.Round(x, 3)).Distinct().ToArray();
@@ -209,11 +211,11 @@ namespace Featherline
 
         #region MainAngles
 
-        private void AdjustAngles(LineInd ind, int earliestChange, out int farthestSurvival)
+        private void AdjustAngles(LineInd ind, int earliestChange, out int farthestSurvival, bool initialAngleFix = false)
         {
             farthestSurvival = 0;
             if (earliestChange == 0) {
-                bool success = AdjustAngle(ind, 0, out earliestChange);
+                bool success = AdjustAngle(ind, 0, out earliestChange, initialAngleFix);
                 if (!success) {
                     count++;
                     return;
@@ -224,7 +226,7 @@ namespace Featherline
                 ind.SkippingState = new FeatherSim(settings).LineIndInfoAtFrame(ind, IndexTimings(i - 1) - 1, timings,
                     (stop, fs, ws) => new Savestate(fs, ws));
 
-                bool success = AdjustAngle(ind, i, out i);
+                bool success = AdjustAngle(ind, i, out i, initialAngleFix);
                 if (success) farthestSurvival = i;
                 else break;
             }
@@ -233,7 +235,7 @@ namespace Featherline
 
         public const float angleIncrement = 1.024f;
 
-        private bool AdjustAngle(LineInd ind, int index, out int newIndex)
+        private bool AdjustAngle(LineInd ind, int index, out int newIndex, bool initialAngleFix)
         {
             int checkingIndex = index;
 
@@ -298,8 +300,7 @@ namespace Featherline
 
             int stateCheckFrame = IndexTimings(checkingIndex);
 
-            bool initFailed = new FeatherSim(settings).LineIndInfoAtFrame(ind, stateCheckFrame, timings,
-                    (stop, fs, ws) => stop && fs.checkpointsGotten != Level.Checkpoints.Length);
+            bool initFailed = CurrentFails(out _);
 
             float angleDiff = GetAngleDiff();
             float increment = angleDiff > 0 ? angleIncrement : -angleIncrement;
@@ -310,7 +311,7 @@ namespace Featherline
                 var oldACPos = new Vector2();
                 var doCW = true;
                 var doAC = true;
-                increment = -increment;
+                increment = -angleIncrement;
 
                 int iteration = 0;
                 while (doCW | doAC) {
@@ -329,6 +330,10 @@ namespace Featherline
                     else if (GetAngleDiff() > 0) goto End;
                     increment = -increment - angleIncrement;
 
+                    if (Math.Abs(increment) > (initialAngleFix ? 180f : 20f)) {
+                        newIndex = checkingIndex;
+                        return false;
+                    }
 
                     if ((!doCW & !doAC) && iteration == 0) {
                         doCW = true;
@@ -339,8 +344,6 @@ namespace Featherline
                 }
 
                 if (!doCW & !doAC) {
-                    //Console.WriteLine($"Line index {index} is truly confusing.");
-                    //SetAngle(ind.angles[index] + Math.Abs(increment) * (FeatherSim.AngleDiff(ind.angles[index], ind.angles[checkingIndex]) > 0 ? -1 : 1));
                     newIndex = checkingIndex;
                     return false;
                 }
@@ -381,23 +384,28 @@ namespace Featherline
                 float originalAngle = ind.angles[index];
                 SetAngle((float)Math.Round(ind.angles[index] + increment, 3));
 
-                bool stop; int cps;
-                (stop, cps, endPos) = new FeatherSim(settings).LineIndInfoAtFrame(ind, stateCheckFrame, timings,
-                    (stop, fs, ws) => (stop, fs.checkpointsGotten, fs.pos));
-
-                bool failed = !ResultSucceeded();
+                bool failed = CurrentFails(out endPos);
 
                 SetAngle(failed ? originalAngle : ind.angles[index]);
 
                 return failed == initFailed;
+            }
 
-                bool ResultSucceeded()
-                {
-                    if (stop && cps != Level.Checkpoints.Length)
-                        return false;
+            bool CurrentFails(out Vector2 endPos)
+            {
+                bool stop; int cps; List<int> wallboops;
+                var sim = new FeatherSim(settings);
+                (stop, cps, endPos, wallboops) = sim.LineIndInfoAtFrame(ind, stateCheckFrame, timings,
+                    (stop, fs, ws) => (stop, fs.checkpointsGotten, fs.pos, sim.wallboops));
 
-                    return baseInfo.Length < stateCheckFrame || cps >= baseInfo[checkingIndex].fState.checkpointsGotten;
-                }
+                if (cps >= Level.Checkpoints.Length) return false;
+                if (stop) return true;
+
+                if ((baseInfo.Length >= stateCheckFrame | baseInfoFinishes)
+                    && cps < baseInfo[Math.Min(stateCheckFrame, baseInfo.Length - 1)].fState.checkpointsGotten)
+                    return true;
+
+                return !TimingTester.ValidWallboops(baseInfoWallboops, wallboops);
             }
 
             float GetAngleDiff() => FeatherSim.DegreesDiff(ind.angles[index], ind.angles[checkingIndex]);
@@ -422,7 +430,7 @@ namespace Featherline
             indLen = settings.Framecount;
             this.settings = settings;
             paralOpt = new ParallelOptions() { MaxDegreeOfParallelism = settings.MaxThreadCount };
-            AdjustAngles(best, 0, out _);
+            AdjustAngles(best, 0, out _, true);
             var sim = new FeatherSim(settings);
             sim.SimulateIndivitual(best.ToFrameGenes(indLen, timings));
             sim.Evaluate(out var fitness, out _);

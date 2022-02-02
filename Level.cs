@@ -236,7 +236,7 @@ namespace Featherline
 
         private static void GetSolidTiles(string src)
         {
-            var parts = Regex.Match(src, @"{X:(-?\d+) Y:(-?\d+) Width:(\d+) Height:(\d+)}\sSolids:(.*)");
+            var parts = Regex.Match(src, @"{X:(-?\d+) Y:(-?\d+) Width:(\d+) Height:(\d+)}\sSolids: (.*)");
             Tiles = new SolidTileInfo() {
                 x = int.Parse(parts.Groups[1].Value),
                 y = int.Parse(parts.Groups[2].Value),

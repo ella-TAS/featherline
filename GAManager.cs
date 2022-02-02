@@ -19,7 +19,7 @@ namespace Featherline
         public static int generation;
 
         static FrameGenesGA ga;
-        public static void BeginAlgorithm(Form1 sender)
+        public static void BeginAlgorithm(Form1 sender, bool debugFavorite)
         {
             if (!InitializeAlgorithm(sender)) {
                 ClearAlgorithmData();
@@ -28,8 +28,16 @@ namespace Featherline
 
             var timer = Stopwatch.StartNew();
 
-            //flight debugging
-            //new FeatherSim(settings).Debug(ParseFavorite(settings.Favorite, 120));
+            if (debugFavorite) {
+                var initGenes = ParseFavorite(settings.Favorite, 120);
+
+                if (initGenes is null)
+                    Console.WriteLine("No initial inputs to debug");
+                else
+                    new FeatherSim(settings).Debug(ParseFavorite(settings.Favorite, 120));
+
+                return;
+            }
 
             if (settings.FrameBasedOnly || !settings.TimingTestFavDirectly) {
                 DoFrameGeneBasedAlgorithm();
@@ -96,19 +104,20 @@ namespace Featherline
 
         private static void DoFrameGeneBasedAlgorithm()
         {
-            ga = new FrameGenesGA(settings);
+            var fav = RawFavorite(settings.Favorite);
+            int startAt = Math.Max(5, fav is null ? 0 : fav.Length);
+
+            ga = new FrameGenesGA(settings, startAt);
             generation = 1;
 
-            DoGensWhileSimulationsGetLonger();
+            DoGensWhileSimulationsGetLonger(startAt);
 
             NormalGenerations();
         }
 
-        private static void DoGensWhileSimulationsGetLonger()
+        private static void DoGensWhileSimulationsGetLonger(int startAt)
         {
-            var fav = RawFavorite(settings.Favorite);
             int gensForIncreasingFrameCount = Math.Max(1, settings.Generations / 2);
-            int startAt = Math.Max(5, fav is null ? 0 : fav.Length);
 
             int divisor = settings.Framecount - startAt;
             if (divisor == 0) return;

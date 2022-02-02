@@ -19,7 +19,7 @@ namespace Featherline
 
     public partial class FeatherSim
     {
-        public Savestate[] GetAllFrameData(float[] ind)
+        public Savestate[] GetAllFrameData(float[] ind, out bool finishes, out int[] wallboops)
         {
             this.ind = ind;
             cleaningInputs = false;
@@ -32,6 +32,9 @@ namespace Featherline
                 if (stop) break;
                 states.Add(new Savestate(si, wind));
             }
+
+            finishes = si.checkpointsGotten == Level.Checkpoints.Length;
+            wallboops = this.wallboops.ToArray();
 
             return states.ToArray();
         }
@@ -87,9 +90,11 @@ namespace Featherline
                 nextTimingIndex = -1;
             }
 
-            while (si.f < f) {
-                RunFrame(GetCurrentAngle());
-                if (stop) break;
+            if (si.checkpointsGotten < Level.Checkpoints.Length) {
+                while (si.f < f) {
+                    RunFrame(GetCurrentAngle());
+                    if (stop) break;
+                }
             }
 
             return GetInfo(stop, si, wind);
@@ -98,8 +103,9 @@ namespace Featherline
             {
                 if (si.f == nextTiming) {
                     float res = ind.angles[nextTimingIndex];
-                    if (Math.Abs(ind.angles[nextTimingIndex + 1] - ind.angles[nextTimingIndex]) > 5.3334)
-                        res += ind.angles[nextTimingIndex + 1] > ind.angles[nextTimingIndex] ? ind.borderExtras[nextTimingIndex] : -ind.borderExtras[nextTimingIndex];
+                    float angDiff = DegreesDiff(ind.angles[nextTimingIndex], ind.angles[nextTimingIndex + 1]);
+                    if (Math.Abs(angDiff) > 5.334)
+                        res += angDiff > 0 ? ind.borderExtras[nextTimingIndex] : -ind.borderExtras[nextTimingIndex];
 
                     nextTimingIndex++;
                     nextTiming = nextTimingIndex == timings.Length ? 99999999 : timings[nextTimingIndex] - 1;

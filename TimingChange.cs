@@ -30,7 +30,7 @@ namespace Featherline
         private bool Validate()
         {
             if (i == 0) {
-                if (target[i] < 0) target[i] = 0;
+                if (target[i] < 1) target[i] = 1;
                 else RightFix();
             }
             else if (i == target.Length - 1) {

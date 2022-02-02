@@ -57,6 +57,8 @@ namespace Featherline
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.infoTemplateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setupTASSnippetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.logFlightOfInitialInputsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.txt_checkpoints = new System.Windows.Forms.RichTextBox();
             this.txt_customHitboxes = new System.Windows.Forms.RichTextBox();
             this.cbx_timingTestFavDirectly = new System.Windows.Forms.CheckBox();
@@ -110,6 +112,8 @@ namespace Featherline
             // 
             // txt_initSolution
             // 
+            this.txt_initSolution.DetectUrls = false;
+            this.txt_initSolution.ImeMode = System.Windows.Forms.ImeMode.On;
             this.txt_initSolution.Location = new System.Drawing.Point(225, 103);
             this.txt_initSolution.Name = "txt_initSolution";
             this.txt_initSolution.Size = new System.Drawing.Size(136, 354);
@@ -367,7 +371,8 @@ namespace Featherline
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.helpToolStripMenuItem,
-            this.copyToolStripMenuItem});
+            this.copyToolStripMenuItem,
+            this.debugToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(729, 24);
@@ -403,6 +408,21 @@ namespace Featherline
             this.setupTASSnippetToolStripMenuItem.Size = new System.Drawing.Size(169, 22);
             this.setupTASSnippetToolStripMenuItem.Text = "Setup TAS Snippet";
             this.setupTASSnippetToolStripMenuItem.Click += new System.EventHandler(this.setupTASSnippetToolStripMenuItem_Click);
+            // 
+            // debugToolStripMenuItem
+            // 
+            this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.logFlightOfInitialInputsToolStripMenuItem});
+            this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.debugToolStripMenuItem.Text = "Debug";
+            // 
+            // logFlightOfInitialInputsToolStripMenuItem
+            // 
+            this.logFlightOfInitialInputsToolStripMenuItem.Name = "logFlightOfInitialInputsToolStripMenuItem";
+            this.logFlightOfInitialInputsToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.logFlightOfInitialInputsToolStripMenuItem.Text = "Log flight of initial inputs";
+            this.logFlightOfInitialInputsToolStripMenuItem.Click += new System.EventHandler(this.logFlightOfInitialInputsToolStripMenuItem_Click);
             // 
             // txt_checkpoints
             // 
@@ -634,6 +654,8 @@ namespace Featherline
         private System.Windows.Forms.Label lbl_shuffleCount;
         private System.Windows.Forms.NumericUpDown num_maxThreadCount;
         private System.Windows.Forms.Label lbl_maxThreadCount;
+        private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem logFlightOfInitialInputsToolStripMenuItem;
     }
 }
 

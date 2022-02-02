@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System;
 using static Featherline.Level;
+using System.Collections.Generic;
 
 namespace Featherline
 {
@@ -55,7 +56,7 @@ namespace Featherline
                 && ((s.X - 7 < si.intPos.X && si.intPos.X < s.X + 7 && s.Y - 3 < si.intPos.Y && si.intPos.Y < s.Y + 15) || // slightly tall
                     (s.X - 8 < si.intPos.X && si.intPos.X < s.X + 8 && s.Y - 2 < si.intPos.Y && si.intPos.Y < s.Y + 14) || // square
                     (s.X - 9 < si.intPos.X && si.intPos.X < s.X + 9 && s.Y - 1 < si.intPos.Y && si.intPos.Y < s.Y + 13) || // slightly squished
-                    (s.X - 11 < si.intPos.X && si.intPos.X < s.X + 11 && s.Y < si.intPos.Y && si.intPos.Y < s.Y + 10)))
+                    (s.X - 11 < si.intPos.X && si.intPos.X < s.X + 11 && s.Y < si.intPos.Y && si.intPos.Y < s.Y + 10))) // sideways bar
                     return true;
 
             for (int i = 0; i < distFiltKBs.Length; i++)
@@ -74,6 +75,8 @@ namespace Featherline
                 (s.X - 8 < x && x < s.X + 8 && s.Y - 2 < y && y < s.Y + 14) || // square
                 (s.X - 9 < x && x < s.X + 9 && s.Y - 1 < y && y < s.Y + 13) || // slightly squished
                 (s.X - 11 < x && x < s.X + 11 && s.Y < y && y < s.Y + 10))); // sideways bar
+
+        public List<int> wallboops = new List<int>();
 
         private void UpdatePosition()
         {
@@ -98,6 +101,8 @@ namespace Featherline
                 // custom colliders (take priority over room border)
                 for (int i = 0; i < distFiltColls.Length; i++) {
                     if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                        stop = sett.AvoidWalls;
+                        wallboops.Add(si.f);
                         BounceX(si.spd.X > 0
                             ? distFiltColls[i].L - 1
                             : distFiltColls[i].R + 1);
@@ -125,8 +130,11 @@ namespace Featherline
                 UpdateUD();
 
                 int x = si.spd.X > 0 ? R : L;
-                if (Tiles.map[U][x] | Tiles.map[D][x])
+                if (Tiles.map[U][x] | Tiles.map[D][x]) {
+                    stop = sett.AvoidWalls;
+                    wallboops.Add(si.f);
                     BounceX((si.intPos.X + (si.spd.X > 0 ? -4 : 3) - Tiles.x) / 8 * 8 + 4 + Tiles.x);
+                }
             }
 
             void YMove()
@@ -136,6 +144,8 @@ namespace Featherline
 
                 for (int i = 0; i < distFiltColls.Length; i++) {
                     if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                        stop = sett.AvoidWalls;
+                        wallboops.Add(si.f);
                         BounceY(si.spd.Y > 0
                             ? distFiltColls[i].U - 1
                             : distFiltColls[i].D + 1);
@@ -146,8 +156,11 @@ namespace Featherline
                 UpdateUD();
 
                 int y = si.spd.Y > 0 ? D : U;
-                if (Tiles.map[y][L] | Tiles.map[y][R])
-                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? 0 : -4) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
+                if (Tiles.map[y][L] | Tiles.map[y][R]) {
+                    stop = sett.AvoidWalls;
+                    wallboops.Add(si.f);
+                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? -2 : 4) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
+                }
             }
 
             void UpdateLR()

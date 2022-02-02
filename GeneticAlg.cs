@@ -59,7 +59,7 @@ namespace Featherline
         {
             for (int i = 0; i < sett.SurvivorCount; i++)
                 if (inds[i].fStates is null)
-                    inds[i].fStates = new FeatherSim(sett).GetAllFrameData(inds[i].genes);
+                    inds[i].fStates = new FeatherSim(sett).GetAllFrameData(inds[i].genes, out _, out _);
         }
 
         #region GeneratingChildren
@@ -190,7 +190,7 @@ namespace Featherline
             return new Individual(newArr);
         }
 
-        public FrameGenesGA(Settings s)
+        public FrameGenesGA(Settings s, int upToFrame)
         {
             sett = s;
             paralOpt = new ParallelOptions() { MaxDegreeOfParallelism = sett.MaxThreadCount };
@@ -211,7 +211,7 @@ namespace Featherline
 
             if (favorite == null)
                 foreach (var ind in inds) {
-                    sim.SimulateIndivitual(ind.genes);
+                    sim.SimulateIndivitual(ind.genes, false, upToFrame);
                     sim.Evaluate(out var fitness, out _);
                     ind.fitness = fitness;
                 }
@@ -299,7 +299,7 @@ namespace Featherline
         private Savestate[] GetStatesOf(LineInd ind)
         {
             if (ind.states is null) {
-                var states = new FeatherSim(sett).GetAllFrameData(ind.ToFrameGenes(indLength, timings));
+                var states = new FeatherSim(sett).GetAllFrameData(ind.ToFrameGenes(indLength, timings), out _, out _);
 
                 return states;
             }
@@ -467,9 +467,13 @@ namespace Featherline
                 line += line < timings.Length && i >= timings[line] ? 1 : 0;
                 res[i] = angles[line];
             }
-            for (line = 0; line < borderExtras.Length; line++)
-                if (Abs(angles[line + 1] - angles[line]) > 5.3334)
-                    res[timings[line] - 1] += angles[line + 1] > angles[line] ? borderExtras[line] : -borderExtras[line];
+            for (line = 0; line < borderExtras.Length; line++) {
+                float angDiff = FeatherSim.DegreesDiff(angles[line], angles[line + 1]);
+                if (Abs(angDiff) > 5.334)
+                    res[timings[line] - 1] += angDiff > 0 ? borderExtras[line] : -borderExtras[line];
+                
+                    
+            }
             return res;
         }
 

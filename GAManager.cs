@@ -97,6 +97,7 @@ namespace Featherline
             }
 
             settings = Form1.settings.Copy();
+            MyParallel.Initialize(settings);
             return true;
         }
 

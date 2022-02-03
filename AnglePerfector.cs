@@ -92,8 +92,7 @@ namespace Featherline
 
             int farthestSurvival = 0;
 
-            //for (int i = 0; i < 9; i++) GetInd(i);
-            Parallel.For(0, 9, paralOpt, GetInd);
+            MyParallel.Run(0, 9, GetInd);
 
             int best = IndexBest(inds);
 
@@ -165,8 +164,7 @@ namespace Featherline
 
             int farthestSurvival = 0;
 
-            //for (int i = 0; i < inds.Length; i++) GetInd(i);
-            Parallel.For(0, inds.Length, paralOpt, GetInd);
+            MyParallel.Run(0, inds.Length, GetInd);
 
             int best = IndexBest(inds);
 

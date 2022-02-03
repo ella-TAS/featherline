@@ -8,7 +8,6 @@ namespace Featherline
 {
     public class FrameGenesGA
     {
-        private ParallelOptions paralOpt;
         public static readonly Random rand = new Random();
         public Settings sett;
 
@@ -33,9 +32,7 @@ namespace Featherline
 
             int shortestFrameCount = sett.Framecount;
 
-            //for (int i = sett.SurvivorCount; i < inds.Length; i++)
-                //DoSim(i);
-            Parallel.For(sett.SurvivorCount, inds.Length, paralOpt, DoSim);
+            MyParallel.Run(sett.SurvivorCount, inds.Length, DoSim);
 
             inds = inds.OrderByDescending(ind => ind.fitness).ToArray();
 
@@ -193,7 +190,6 @@ namespace Featherline
         public FrameGenesGA(Settings s, int upToFrame)
         {
             sett = s;
-            paralOpt = new ParallelOptions() { MaxDegreeOfParallelism = sett.MaxThreadCount };
 
             crossoverProb = sett.SurvivorCount <= 1 ? 0 : sett.CrossoverProbability / 2;
             mutationProb = sett.MutationProbability;
@@ -273,7 +269,7 @@ namespace Featherline
 
             //for (int i = sett.SurvivorCount; i < inds.Length; i++)
                 //DoSim(i);
-            Parallel.For(sett.SurvivorCount, inds.Length, paralOpt, DoSim);
+            MyParallel.Run(sett.SurvivorCount, inds.Length, DoSim);
 
             inds = inds.OrderByDescending(ind => ind.fitness).ToArray();
 

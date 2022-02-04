@@ -276,7 +276,6 @@ namespace Featherline
 
         #endregion
 
-
         #region InputCleanup
 
         private void CleanupAndReset()
@@ -372,9 +371,10 @@ namespace Featherline
             }
         }
 
+        // returns whether all of the new boops are so at least one of the approved boops is close to it
         public static bool ValidWallboops(int[] goodBoops, IEnumerable<int> newBoops)
         {
-            return newBoops.Any(nb => !goodBoops.All(gb => Math.Abs(nb - gb) > 2));
+            return newBoops.All(nb => !goodBoops.All(gb => Math.Abs(nb - gb) > 2));
         }
 
         #endregion

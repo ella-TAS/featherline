@@ -23,14 +23,14 @@ namespace Featherline
 
         public static bool HasHazards;
 
-        public static Collider[] Colliders;
+        public static RectangleHitbox[] Colliders;
 
         public static Checkpoint[] Checkpoints;
 
         static Settings srcSett;
         public static void Prepare(Settings sourceSettings)
         {
-            Colliders = new Collider[0];
+            Colliders = new RectangleHitbox[0];
             Killboxes = new RectangleHitbox[0];
 
             srcSett = sourceSettings;
@@ -76,11 +76,12 @@ namespace Featherline
             var getUL = getIntPair.Matches(UL);
             var getDR = getIntPair.Matches(DR);
 
-            Killboxes = Killboxes.Concat(getUL.Select((m, i) => new RectangleHitbox(
+            Killboxes = Killboxes.Concat(getUL.Select((m, i) => new RectangleHitbox(new Bounds(
                     int.Parse(m.Groups[1].Value),
                     int.Parse(m.Groups[2].Value),
                     int.Parse(getDR[i].Groups[1].Value),
                     int.Parse(getDR[i].Groups[2].Value)
+                    ).Expand(false)
                 ))).ToArray();
         }
 
@@ -90,11 +91,12 @@ namespace Featherline
             var getDR = getIntPair.Matches(DR);
             var getDir = Regex.Matches(dir, @"Left|Right|Up|Down");
 
-            Spikes = getUL.Select((m, i) => new Spike(
+            Spikes = getUL.Select((m, i) => new Spike(new Bounds(
                     int.Parse(m.Groups[1].Value),
                     int.Parse(m.Groups[2].Value),
                     int.Parse(getDR[i].Groups[1].Value),
-                    int.Parse(getDR[i].Groups[2].Value),
+                    int.Parse(getDR[i].Groups[2].Value)
+                    ).Expand(false),
                     getDir[i].Value
                 )).ToArray();
         }
@@ -145,10 +147,10 @@ namespace Featherline
         {
             try {
                 var hazards = Spinners.Select(s => new IntVec2(s.X / 8 * 8, s.Y / 8 * 8))
-                    .Concat(Killboxes.Select(k => new IntVec2(k.L / 8 * 8, k.U / 8 * 8)))
-                    .Concat(Killboxes.Select(k => new IntVec2(k.R / 8 * 8, k.D / 8 * 8)))
-                    .Concat(Spikes.Select(s => new IntVec2(s.L / 8 * 8, s.U / 8 * 8)))
-                    .Concat(Spikes.Select(s => new IntVec2(s.R / 8 * 8, s.D / 8 * 8)))
+                    .Concat(Killboxes.Select(k => new IntVec2(k.bounds.L / 8 * 8, k.bounds.U / 8 * 8)))
+                    .Concat(Killboxes.Select(k => new IntVec2(k.bounds.R / 8 * 8, k.bounds.D / 8 * 8)))
+                    .Concat(Spikes.Select(s => new IntVec2(s.bounds.L / 8 * 8, s.bounds.U / 8 * 8)))
+                    .Concat(Spikes.Select(s => new IntVec2(s.bounds.R / 8 * 8, s.bounds.D / 8 * 8)))
                     .ToArray();
 
                 DeathMap = new DeathMapInfo() {
@@ -216,10 +218,10 @@ namespace Featherline
         }
         private static void AddSingleKillboxCollision(RectangleHitbox hb)
         {
-            int xStart = Math.Max(0, (hb.L - DeathMap.xMin) / 8 - 2);
-            int xEnd = Math.Min(DeathMap.widthInTiles, (hb.R - DeathMap.xMin) / 8 + 3);
-            int yStart = Math.Max(0, (hb.U - DeathMap.yMin) / 8 - 2);
-            int yEnd = Math.Min(DeathMap.heightInTiles, (hb.D - DeathMap.yMin) / 8 + 3);
+            int xStart = Math.Max(0, (hb.bounds.L - DeathMap.xMin) / 8 - 2);
+            int xEnd = Math.Min(DeathMap.widthInTiles, (hb.bounds.R - DeathMap.xMin) / 8 + 3);
+            int yStart = Math.Max(0, (hb.bounds.U - DeathMap.yMin) / 8 - 2);
+            int yEnd = Math.Min(DeathMap.heightInTiles, (hb.bounds.D - DeathMap.yMin) / 8 + 3);
 
             for (int x = xStart; x < xEnd; x++) {
                 int xCoord = DeathMap.xMin + x * 8;
@@ -272,7 +274,7 @@ namespace Featherline
         private static void GetCustomHitboxes()
         {
             var kbs = new List<RectangleHitbox>();
-            var colls = new List<Collider>();
+            var colls = new List<RectangleHitbox>();
 
             var lineEmpty = new Regex(@"^\s*$");
             var parseLine = new Regex(@"^\s*(.?\d+),\s*(.?\d+),\s*(.?\d+),\s*(.?\d+)(?:\s*$|\s*([cC]))");
@@ -285,22 +287,17 @@ namespace Featherline
                 if (!parse.Success)
                     throw new ArgumentException($"Invalid hitbox definition on line {i + 1}");
 
+                var rawBounds = new Bounds(int.Parse(parse.Groups[1].Value),
+                                           int.Parse(parse.Groups[2].Value),
+                                           int.Parse(parse.Groups[3].Value),
+                                           int.Parse(parse.Groups[4].Value));
+
                 if (parse.Groups[5].Success) {
-                    colls.Add(new Collider(
-                        int.Parse(parse.Groups[1].Value),
-                        int.Parse(parse.Groups[2].Value),
-                        int.Parse(parse.Groups[3].Value),
-                        int.Parse(parse.Groups[4].Value)
-                    ));
+                    colls.Add(new RectangleHitbox(rawBounds.Expand(true)));
                     continue;
                 }
 
-                kbs.Add(new RectangleHitbox(
-                    int.Parse(parse.Groups[1].Value),
-                    int.Parse(parse.Groups[2].Value),
-                    int.Parse(parse.Groups[3].Value),
-                    int.Parse(parse.Groups[4].Value)
-                ));
+                kbs.Add(new RectangleHitbox(rawBounds.Expand(false)));
             }
 
             Colliders = Colliders.Concat(colls).ToArray();
@@ -321,22 +318,17 @@ namespace Featherline
                 if (!parse.Success)
                     throw new ArgumentException($"Invalid checkpoint definition on line {i + 1}");
 
+                var bounds = new Bounds(int.Parse(parse.Groups[1].Value),
+                                        int.Parse(parse.Groups[2].Value),
+                                        int.Parse(parse.Groups[3].Value),
+                                        int.Parse(parse.Groups[4].Value));
+
                 if (parse.Groups[5].Success) {
-                    res.Add(new Checkpoint(
-                        int.Parse(parse.Groups[1].Value) + 2,
-                        int.Parse(parse.Groups[2].Value) - 4,
-                        int.Parse(parse.Groups[3].Value) - 3,
-                        int.Parse(parse.Groups[4].Value) - 9
-                    ));
+                    res.Add(new Checkpoint(bounds.Expand()));
                     continue;
                 }
 
-                res.Add(new Checkpoint(
-                    int.Parse(parse.Groups[1].Value),
-                    int.Parse(parse.Groups[2].Value),
-                    int.Parse(parse.Groups[3].Value),
-                    int.Parse(parse.Groups[4].Value)
-                ));
+                res.Add(new Checkpoint(bounds.Expand(false)));
             }
             Checkpoints = res.ToArray();
         }

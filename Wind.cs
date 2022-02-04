@@ -9,10 +9,10 @@
             if (doWind) {
                 // check wind triggers and update target wind speed
                 foreach (var WT in Level.WindTriggers) {
-                    if (si.intPos.X >= WT.L &&
-                        si.intPos.X <= WT.R &&
-                        si.intPos.Y >= WT.U &&
-                        si.intPos.Y <= WT.D) {
+                    if (si.intPos.X >= WT.bounds.L &&
+                        si.intPos.X <= WT.bounds.R &&
+                        si.intPos.Y >= WT.bounds.U &&
+                        si.intPos.Y <= WT.bounds.D) {
 
                         if (WT.vertWind) {
                             wind.target.Y = WT.strength;
@@ -35,12 +35,13 @@
         }
     }
 
-    public class WindTrigger : Collider
+    public class WindTrigger : RectangleHitbox
     {
         public bool vertWind;
         public float strength;
 
-        public WindTrigger(IntVec2 pos, IntVec2 size, bool vertical, float stren) : base(pos.X, pos.Y, pos.X + size.X, pos.Y + size.Y)
+        public WindTrigger(IntVec2 pos, IntVec2 size, bool vertical, float stren)
+            : base(new Bounds(pos.X, pos.Y, pos.X + size.X, pos.Y + size.Y).Expand(true))
         {
             vertWind = vertical;
             strength = stren;

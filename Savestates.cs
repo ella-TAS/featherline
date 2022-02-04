@@ -29,7 +29,8 @@ namespace Featherline
 
             while (si.f < ind.Length) {
                 RunFrame(ind[si.f]);
-                if (stop) break;
+                if (stop)
+                    break;
                 states.Add(new Savestate(si, wind));
             }
 

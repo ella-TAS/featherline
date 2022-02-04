@@ -12,7 +12,7 @@ namespace Featherline
 		public FeatherSim(Settings s)
 		{
 			sett = s;
-			IsDead = Level.HasHazards ? (Func<bool>)DeathCheck : (() => false);
+			CheckDeath = Level.HasHazards ? (Action)DeathCheck : () => { };
 		}
 
 		public void Debug(float[] ind)
@@ -61,7 +61,7 @@ namespace Featherline
 		public void Evaluate(out double fitness, out int fCount)
         {
 			int cpExtras = si.checkpointsGotten * 10000;
-			if (si.checkpointsGotten >= sett.Checkpoints.Length) {
+			if (si.checkpointsGotten >= Level.Checkpoints.Length) {
 				si.checkpointsGotten--;
 				double nextCpDist = si.GetDistToNextCp();
 				fitness = cpExtras - si.f * 8 - nextCpDist;
@@ -112,26 +112,27 @@ namespace Featherline
 
 			UpdatePosition();
 
-			if (AnalyzeProgress() || IsDead()) {
+			AnalyzeProgress();
+			CheckDeath();
+			if (stop) {
 				InputCleaning(true);
-				stop = true;
 				return;
 			}
 
 			WindFrame();
 		}
 
-		private bool AnalyzeProgress() // return value -> whether simulation is finished
+		private void AnalyzeProgress() // return value -> whether simulation is finished
 		{
 			float dist = si.GetDistToNextCp();
 			fitEval = dist < fitEval.closestDist ? (dist, si.f) : fitEval;
 
 			if (Level.Checkpoints[si.checkpointsGotten].TouchingAsFeather(si.intPos)) {
 				si.checkpointsGotten++;
+				if (si.checkpointsGotten >= Level.Checkpoints.Length)
+					stop = true;
 				fitEval.closestDist = 999999;
 			}
-
-			return si.checkpointsGotten >= sett.Checkpoints.Length;
 		}
 
 		int turningStart;

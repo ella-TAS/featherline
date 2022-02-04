@@ -7,7 +7,7 @@ namespace Featherline
 {
     public partial class FeatherSim
     {
-        public Func<bool> IsDead;
+        public Action CheckDeath;
 
         private int framesSinceDistFilter = 999;
         private IntVec2[] distFiltSpinners;
@@ -15,18 +15,18 @@ namespace Featherline
         private Spike[] distFiltSpikes;
 
         private int framesSinceColliderFilter = 999;
-        private Collider[] distFiltColls;
+        private RectangleHitbox[] distFiltColls;
 
-        private bool DeathCheck()
+        private void DeathCheck()
         {
             framesSinceDistFilter++;
 
-            if (!CheckDangerMap())
-                return false;
+            if (!CheckDangerMap()) return;
 
             DistFilterHazards();
 
-            return RawHazardCollision();
+            if (RawHazardCollision())
+                stop = true;
         }
 
         private bool CheckDangerMap()
@@ -104,8 +104,8 @@ namespace Featherline
                         stop = sett.AvoidWalls;
                         wallboops.Add(si.f);
                         BounceX(si.spd.X > 0
-                            ? distFiltColls[i].L - 1
-                            : distFiltColls[i].R + 1);
+                            ? distFiltColls[i].bounds.L - 1
+                            : distFiltColls[i].bounds.R + 1);
                         return;
                     }
                 }
@@ -147,8 +147,8 @@ namespace Featherline
                         stop = sett.AvoidWalls;
                         wallboops.Add(si.f);
                         BounceY(si.spd.Y > 0
-                            ? distFiltColls[i].U - 1
-                            : distFiltColls[i].D + 1);
+                            ? distFiltColls[i].bounds.U - 1
+                            : distFiltColls[i].bounds.D + 1);
                         return;
                     }
                 }

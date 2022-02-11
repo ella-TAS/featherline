@@ -82,6 +82,8 @@ namespace Featherline
             PrintResult();
         }
 
+        #region Feedback
+
         private void PrintResult()
         {
             WriteColor($"\nFinished with fitness {best.ind.fitness}\n", Yellow);
@@ -101,6 +103,8 @@ namespace Featherline
             Console.WriteLine("oh god 0 timings this wont do");
             PrintResult();
         }
+
+        #endregion
 
         #region TimingTestingLogic
 
@@ -132,34 +136,34 @@ namespace Featherline
                     while (true) {
                         bool noImprovement = true;
                         for (int j = 0; j < Math.Min(best.timings.Length, Stop()); j++) {
-                            if (current.ind.borderExtras[j] <= 0) {
+                            if (current.ind.borders[j] <= 0) {
                                 change = new TimingChange(j, 1);
                                 if (change.ApplyTo(current.timings, testedSinceImprovement)) {
                                     testedSinceImprovement.Add(new SingleTiming(j, current.timings[j]));
                                     Console.WriteLine("predicted improvement " + change);
-                                    current.ind.borderExtras[j] = AnglePerfector.MaxFrameSteer;
+                                    current.ind.borders[j] = AnglePerfector.MaxFrameSteer;
                                     if (TestPerfectTiming(current.timings, precision, j)) {
                                         testedSinceImprovement.Clear();
                                         noImprovement = false;
                                         current = best.Clone();
                                         break;
                                     }
-                                    else current.ind.borderExtras[j] = 0f;
+                                    else current.ind.borders[j] = 0f;
                                 }
                             }
-                            else if (current.ind.borderExtras[j] >= AnglePerfector.MaxFrameSteer) {
+                            else if (current.ind.borders[j] >= AnglePerfector.MaxFrameSteer) {
                                 change = new TimingChange(j, -1);
                                 if (change.ApplyTo(current.timings, testedSinceImprovement)) {
                                     testedSinceImprovement.Add(new SingleTiming(j, current.timings[j]));
                                     Console.WriteLine("predicted improvement " + change);
-                                    current.ind.borderExtras[j] = 0f;
+                                    current.ind.borders[j] = 0f;
                                     if (TestPerfectTiming(current.timings, precision, j)) {
                                         testedSinceImprovement.Clear();
                                         noImprovement = false;
                                         current = best.Clone();
                                         break;
                                     }
-                                    else current.ind.borderExtras[j] = AnglePerfector.MaxFrameSteer;
+                                    else current.ind.borders[j] = AnglePerfector.MaxFrameSteer;
                                 }
                             }
                         }
@@ -206,7 +210,7 @@ namespace Featherline
         }
 
         // returns whether the tested timing was faster
-        private bool TestTiming(int[] turnPoints, float[] angles, int generations)
+        private bool TestTiming(int[] turnPoints, AngleSet angles, int generations)
         {
             Console.WriteLine(testingTimingPrefix + "Testing Timing: " + string.Join(", ", turnPoints.Select(tp => tp.ToString()).ToArray()));
 
@@ -261,7 +265,7 @@ namespace Featherline
             return false;
         }
 
-        private LineInd UseAlgOnTiming(int[] turnPoints, float[] angles, int generations)
+        private LineInd UseAlgOnTiming(int[] turnPoints, AngleSet angles, int generations)
         {
             var ga = new LineGenesGA(settings, turnPoints, angles);
 
@@ -287,34 +291,34 @@ namespace Featherline
         private void CleanUpCurrentInputLines()
         {
             var timings = best.timings.ToList();
-            var borderExtras = best.ind.borderExtras.ToList();
             var angles = best.ind.angles.ToList();
+            var borderExtras = best.ind.borders.ToList();
 
             for (int i = 1; i < timings.Count;) {
                 if (Math.Abs(angles[i] - angles[i + 1]) < 1f) {
                     timings.RemoveAt(i);
-                    borderExtras.RemoveAt(i);
                     angles.RemoveAt(i + 1);
+                    borderExtras.RemoveAt(i);
                 }
                 else if (timings[i] - timings[i - 1] == 1) {
                     timings.RemoveAt(i);
-                    borderExtras.RemoveAt(i);
                     angles.RemoveAt(i + 1);
+                    borderExtras.RemoveAt(i);
                 }
                 else
                     i++;
             }
 
             best.timings = timings.ToArray();
-            best.ind.borderExtras = borderExtras.ToArray();
-            best.ind.angles = angles.ToArray();
+            best.ind.angles = new AngleSet(angles);
+            best.ind.borders = new AngleSet(borderExtras);
         }
 
         // a line is useless if you can set its angle to the angle of the line after it,
         // and you dont die or miss a checkpoint during either of those two lines
         private void RemoveUnnecessaryLinesUsingSim()
         {
-            var anglesBackup = (float[])best.ind.angles.Clone();
+            var anglesBackup = best.ind.angles.Clone();
 
             var unnecessaryLines = new List<int>();
             var timingStates = GetTurnpointStates(out var wallboops);
@@ -330,15 +334,11 @@ namespace Featherline
                     (bool stop, FeatherSim.FState fs, WindState ws) =>
                     (stop && fs.checkpointsGotten < Level.Checkpoints.Length, new Savestate(fs, ws), sim.wallboops));
 
-
-                //bool dead = new FeatherSim(settings).TryGetStateAtFrame(best.ind.ToFrameGenes(settings.Framecount, best.timings),
-                    //i == best.timings.Length ? best.inputs.Length : best.timings[i], out var state);
-
                 if (NoDifference())
                     unnecessaryLines.Add(i);
                 else {
                     firstInChain = i;
-                    Array.Copy(anglesBackup, best.ind.angles, anglesBackup.Length);
+                    anglesBackup.CopyTo(best.ind.angles);
                 }
 
                 bool NoDifference() =>
@@ -349,7 +349,7 @@ namespace Featherline
             }
 
             var timings = best.timings.ToList();
-            var borderExtras = best.ind.borderExtras.ToList();
+            var borderExtras = best.ind.borders.ToList();
             var angles = best.ind.angles.ToList();
 
             foreach (int t in unnecessaryLines.AsEnumerable().Reverse()) {
@@ -359,8 +359,8 @@ namespace Featherline
             }
 
             best.timings = timings.ToArray();
-            best.ind.borderExtras = borderExtras.ToArray();
-            best.ind.angles = angles.ToArray();
+            best.ind.borders = new AngleSet(borderExtras);
+            best.ind.angles = new AngleSet(angles);
 
             best.ind.fitness = -99999;
 
@@ -416,7 +416,7 @@ namespace Featherline
                 }
             }
             best.ind.fitness = -9999999;
-            best.ind.borderExtras = new float[best.ind.borderExtras.Length];
+            best.ind.borders = new AngleSet(best.ind.borders.Length);
 
             //TestTiming(best.timings, best.ind.angles, settings.GensPerTiming);
             TestUntilNoImprovement(settings.GensPerTiming, false, 0);
@@ -454,13 +454,17 @@ namespace Featherline
 
         #region Constructors
 
-        public TimingTester(Settings settings, float[] src)
+        public TimingTester(Settings settings, AngleSet src)
         {
             this.settings = settings;
 
             SavedTiming.sett = settings;
 
-            SetUpFirstIndividual(SimplifyFrameGenes(src));
+            Console.WriteLine("\n" + GAManager.FrameGenesToString(src));
+            var simplified = SimplifyFrameGenes(src);
+            Console.WriteLine("\n" + GAManager.FrameGenesToString(simplified));
+
+            SetUpFirstIndividual(simplified);
         }
 
         public TimingTester(Settings settings, string favorite)
@@ -474,7 +478,7 @@ namespace Featherline
             SetUpFirstIndividual(frames);
         }
 
-        private void SetUpFirstIndividual(float[] frames)
+        private void SetUpFirstIndividual(AngleSet frames)
         {
             var anglesLs = new List<float>();
             var timingsLs = new List<int>();
@@ -489,23 +493,23 @@ namespace Featherline
             }
             anglesLs.Add(currentAngle);
 
-            best = new SavedTiming(anglesLs.ToArray(), new float[timingsLs.Count], timingsLs.ToArray());
+            best = new SavedTiming(new AngleSet(anglesLs.ToArray()), new AngleSet(timingsLs.Count), timingsLs.ToArray());
         }
 
         #endregion
 
         #region ConvertingFromFrameGenes
 
-        private float[] SimplifyFrameGenes(float[] src)
+        private AngleSet SimplifyFrameGenes(AngleSet src)
         {
-            float[] angles = GetFlightAngles(src);
-            float[] angDif = ToAngleDifferences(angles);
+            float[] angles = GetFlightAngles(src).Select(a => (float)Math.Round(a, 3)).ToArray();
+            float[] angDif = ToAngleDifferences(angles).Select(a => (float)Math.Round(a, 3)).ToArray();
 
             for (int i = 0; i < angDif.Length; i++) {
                 if (Math.Abs(angDif[i]) < 2) {
                     int start = i;
                     var startAngle = angles[i];
-                    while (i < angDif.Length - 1 && Math.Abs(angles[++i] - startAngle) < 2) { }
+                    while (i < angDif.Length - 1 && Math.Abs(FeatherSim.DegreesDiff(angles[++i], startAngle)) < 2) { }
                     for (int j = start; j < i; j++)
                         src[j] = startAngle;
                 }
@@ -522,7 +526,7 @@ namespace Featherline
             return src;
         }
 
-        private float[] GetFlightAngles(float[] src)
+        private float[] GetFlightAngles(AngleSet src)
         {
             var flightStates = new FeatherSim(settings).GetAllFrameData(src, out _, out _);
             return flightStates
@@ -534,7 +538,7 @@ namespace Featherline
         {
             var res = new float[angles.Length - 1];
             for (int i = 0; i < res.Length; i++)
-                res[i] = angles[i] - angles[i + 1];
+                res[i] = FeatherSim.DegreesDiff(angles[i], angles[i + 1]);
             return res;
         }
 
@@ -549,18 +553,18 @@ namespace Featherline
 
         public int[] timings;
 
-        public float[] inputs;
+        public AngleSet inputs;
 
         // is deep copy
         public SavedTiming(LineInd src, int[] timings)
         {
-            ind = new LineInd(src.angles, src.borderExtras);
+            ind = new LineInd(src.angles, src.borders);
             ind.fitness = src.fitness;
             this.timings = (int[])timings.Clone();
             inputs = ind.ToFrameGenes(sett.Framecount, timings);
         }
 
-        public SavedTiming(float[] angles, float[] borderExtras, int[] timings)
+        public SavedTiming(AngleSet angles, AngleSet borderExtras, int[] timings)
             : this(new LineInd(angles, borderExtras), timings) { }
 
         public SavedTiming Clone() => new SavedTiming(ind, timings);

@@ -6,23 +6,26 @@ namespace Featherline
     public readonly struct Bounds
     {
         public readonly int L, U, R, D;
+        public readonly float Lf, Uf, Rf, Df;
 
-        public Bounds(int L, int U, int R, int D)
+        public Bounds(int l, int u, int r, int d)
         {
-            this.L = L;
-            this.U = U;
-            this.R = R;
-            this.D = D;
+            (L, U, R, D) = (l, u, r, d);
+            Lf = l - 0.5f;
+            Uf = u - 0.5f;
+            Rf = r - 0.5f;
+            Df = d - 0.5f;
         }
+        public Bounds(IntVec2 UL, IntVec2 DR) : this(UL.X, UL.Y, DR.X, DR.Y) { }
 
-        public Bounds Expand(/*bool feahterHitbox, */bool collider)
+        public Bounds Expand(/*bool featherHitbox, */bool collider)
         {
             int L = this.L - 2;
             int U = this.U + 4;
             int R = this.R + 3;
             int D = this.D + 9;
 
-            /*if (!feahterHitbox) {
+            /*if (!featherHitbox) {
                 if (collider) {
                     U -= 3; D++;
                 }
@@ -38,18 +41,8 @@ namespace Featherline
         }
 
         public Bounds Expand() => new Bounds(L, U, R + 1, D + 1);
-    }
-    public readonly struct FloatBounds
-    {
-        public readonly float L, U, R, D;
-
-        public FloatBounds(Bounds b)
-        {
-            L = b.L - 0.5f;
-            U = b.U - 0.5f;
-            R = b.R - 0.5f;
-            D = b.D - 0.5f;
-        }
+            
+        public override string ToString() => $"L:{L}, U:{U}, R:{R}, D:{D}";
     }
 
     public class RectangleHitbox
@@ -69,33 +62,32 @@ namespace Featherline
 
         public RectangleHitbox(Bounds b) => bounds = b;
         public RectangleHitbox() { }
+
+        public override string ToString() => bounds.ToString();
     }
 
     public class Checkpoint : RectangleHitbox
     {
         public Vector2 center;
 
-        private FloatBounds fb;
-
         public Checkpoint(Bounds b) : base(b)
         {
             center = new Vector2((b.L + b.R) / 2f, (b.U + b.D) / 2f);
-            fb = new FloatBounds(b);
         }
         public Checkpoint() : base() { }
 
         public double GetFinalCPDistance(Vector2 pos, Vector2 previousPos)
         {
-            var rawL = fb.L - pos.X;
-            var rawR = pos.X - fb.R;
-            var rawU = fb.U - pos.Y;
-            var rawD = pos.Y - fb.D;
+            var rawL = bounds.Lf - pos.X;
+            var rawR = pos.X - bounds.Rf;
+            var rawU = bounds.Uf - pos.Y;
+            var rawD = pos.Y - bounds.Df;
 
             if (rawL < 0 & rawR < 0 & rawU < 0 & rawD < 0) {
-                rawL = fb.L - previousPos.X;
-                rawR = previousPos.X - fb.R;
-                rawU = fb.U - previousPos.Y;
-                rawD = previousPos.Y - fb.D;
+                rawL = bounds.Lf - previousPos.X;
+                rawR = previousPos.X - bounds.Rf;
+                rawU = bounds.Uf - previousPos.Y;
+                rawD = previousPos.Y - bounds.Df;
             }
 
             double xDiff = rawL > 0 ? rawL : rawR > 0 ? rawR : 0;
@@ -124,8 +116,98 @@ namespace Featherline
             => TouchingAsFeather(pos) && moveDirAllowsDeath(spd);
     }
 
-    public class JumpThru : RectangleHitbox
+    #region JumpThrus
+
+    public class CustomJT : RectangleHitbox
     {
-        public Func<Vector2, Vector2, bool> Booped;
+        protected Func<Vector2, bool> IsBeyond;
+        protected bool horizontal;
+
+        public Func<IntVec2, Vector2, bool> Pulling;
+        public Vector2 pullVector;
+
+        public int axisFix;
+
+        public bool Booped(FeatherSim.FState fs)
+        {
+            if (IsBeyond(fs.pos))
+                return false;
+
+            var oldPos = fs.pos - (fs.spd * FeatherSim.DeltaTime);
+            if (!IsBeyond(oldPos))
+                return false;
+
+            bool booped = horizontal
+                ? bounds.Lf < fs.pos.X & fs.pos.X < bounds.Rf
+                : bounds.Uf < oldPos.Y & oldPos.Y < bounds.Df;
+
+            if (booped) {
+                if (horizontal) {
+                    fs.pos.Y = axisFix;
+                    fs.intPos.Y = axisFix;
+                    fs.spd.Y /= -2;
+                }
+                else {
+                    fs.pos.X = axisFix;
+                    fs.intPos.X = axisFix;
+                    fs.spd.X /= -2;
+                }
+            }
+
+            return booped;
+        }
+
+        public CustomJT (Bounds bounds, Facings orientation, bool pulls) : base(bounds)
+        {
+            switch (orientation) {
+                case Facings.Left:
+                    IsBeyond = pos => pos.X < bounds.Lf;
+                    horizontal = false;
+                    Pulling = pulls ? (Func<IntVec2, Vector2, bool>)
+                        ((pos, spd) => spd.X <= 0f & TouchingAsFeather(pos))
+                        : (pos, spd) => false;
+                    pullVector = new Vector2(-40f, 0f) * FeatherSim.DeltaTime;
+                    axisFix = bounds.L - 1;
+                    break;
+                case Facings.Right:
+                    IsBeyond = pos => pos.X > bounds.Rf;
+                    horizontal = false;
+                    Pulling = pulls ? (Func<IntVec2, Vector2, bool>)
+                            ((pos, spd) => spd.X >= 0f & TouchingAsFeather(pos))
+                        : (pos, spd) => false;
+                    pullVector = new Vector2(40f, 0f) * FeatherSim.DeltaTime;
+                    axisFix = bounds.R;
+                    break;
+                case Facings.Down:
+                    IsBeyond = pos => pos.Y > bounds.Df;
+                    horizontal = true;
+                    Pulling = pulls ? (Func<IntVec2, Vector2, bool>)
+                            ((pos, spd) => spd.Y >= 0f & TouchingAsFeather(pos))
+                        : (pos, spd) => false;
+                    pullVector = new Vector2(0f, 40f) * FeatherSim.DeltaTime;
+                    axisFix = bounds.D;
+                    break;
+                default:
+                    throw new Exception(@"Attempted to construct a standard jumpthru with the rotated jumpthru constructor.");
+            }
+        }
+
+        public CustomJT(Bounds b) : base(b) { }
+
+        public override string ToString() => bounds.ToString();
     }
+
+    public class NormalJT : CustomJT
+    {
+        public NormalJT(Bounds b) : base(b)
+        {
+            pullVector = new Vector2(0f, -40f);
+            IsBeyond = pos => pos.Y < bounds.Uf;
+            Pulling = (pos, spd) => spd.Y <= 0f & TouchingAsFeather(pos);
+            axisFix = bounds.U - 1;
+            horizontal = true;
+        }
+    }
+
+    #endregion
 }

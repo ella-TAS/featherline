@@ -1,22 +1,19 @@
 ﻿using System.Linq;
 using System;
 using static System.Math;
-using System.Threading.Tasks;
-using static Featherline.FrameGenesGA;
+using static Featherline.GAManager;
 
 namespace Featherline
 {
     public class FrameGenesGA
     {
-        public static readonly Random rand = new Random();
         public Settings sett;
 
         private float crossoverProb;
         private float mutationProb;
         private float mutationMagnitude;
 
-        public Individual[] inds;
-        public FeatherSim sim;
+        public FrameInd[] inds;
 
         private int UpToFrame;
         private bool UseSavestates;
@@ -39,7 +36,7 @@ namespace Featherline
             if (shortestFrameCount < sett.Framecount) {
                 sett.Framecount = shortestFrameCount;
                 foreach (var ind in inds)
-                    Array.Resize(ref ind.genes, shortestFrameCount);
+                    ind.genes.Resize(shortestFrameCount);
             }
 
             void DoSim(int i)
@@ -82,7 +79,7 @@ namespace Featherline
                 // mutation
                 else if (mutationProb > actionChooser) {
                     int parent = rand.Next(sett.SurvivorCount);
-                    inds[parent].genes.CopyTo(inds[i].genes, 0);
+                    inds[parent].genes.CopyTo(inds[i].genes);
 
                     if (UseSavestates) {
                         inds[i].parent = inds[parent];
@@ -96,7 +93,7 @@ namespace Featherline
                 // simplification
                 else {
                     int parent = rand.Next(sett.SurvivorCount);
-                    inds[parent].genes.CopyTo(inds[i].genes, 0);
+                    inds[parent].genes.CopyTo(inds[i].genes);
 
                     if (UseSavestates) {
                         inds[i].parent = inds[parent];
@@ -110,7 +107,7 @@ namespace Featherline
             }
         }
 
-        public void Mutate(Individual ind)
+        public void Mutate(FrameInd ind)
         {
             int mutationCount = rand.Next(sett.MaxMutChangeCount);
             int earliestMutatedFrame = 99999999;
@@ -121,15 +118,11 @@ namespace Featherline
 
                 earliestMutatedFrame = start < earliestMutatedFrame ? start : earliestMutatedFrame;
 
-                for (int i = start; i < end; i++) {
-                    ind.genes[i] = (float)Round(ind.genes[i] + increment, 3);
-                    ind.genes[i] = ind.genes[i] >= 360
-                        ? ind.genes[i] - 360
-                        : ind.genes[i] < 0 ? ind.genes[i] + 360 : ind.genes[i];
-                }
+                for (int i = start; i < end; i++)
+                    ind.genes[i] += increment;
             }
 
-            if (UseSavestates) {
+            if (UseSavestates && ind.parent.fStates.Length > 0) {
                 earliestMutatedFrame--;
                 if (earliestMutatedFrame < 0) {
                     ind.SkippingState = null;
@@ -139,12 +132,12 @@ namespace Featherline
             }
         }
 
-        public (Individual child1, Individual child2) Crossover(Individual parent1, Individual parent2)
+        public (FrameInd child1, FrameInd child2) Crossover(FrameInd parent1, FrameInd parent2)
         {
             int index = rand.Next(1, UpToFrame - 1);
 
-            var res = (new Individual(parent1.genes[..index].Concat(parent2.genes[index..]).ToArray()),
-                       new Individual(parent2.genes[..index].Concat(parent1.genes[index..]).ToArray()));
+            var res = (new FrameInd(parent1.genes[..index].Concat(parent2.genes[index..])),
+                       new FrameInd(parent2.genes[..index].Concat(parent1.genes[index..])));
 
             if (UseSavestates) {
                 res.Item1.parent = parent1;
@@ -156,7 +149,7 @@ namespace Featherline
             return res;
         }
 
-        public void Simplify(Individual ind)
+        public void Simplify(FrameInd ind)
         {
             int len = rand.Next(UpToFrame / 3);
             int start = rand.Next(1, UpToFrame - len - 1);
@@ -165,27 +158,19 @@ namespace Featherline
             float newVal = rand.Next(3) switch {
                 0 => ind.genes[start - 1], //set to value on the range's left
                 1 => ind.genes[end], //set to value on the range's right
-                2 => (float)Round(ind.genes[start..end].Sum() / (end - start), 3), //set to the average of the range
+                2 => ind.genes[start..end].Sum() / (end - start), //set to the average of the range
                 _ => 0
             };
 
-            for (int i = start; i < end; i++)
-                ind.genes[i] = newVal;
+            ind.genes.SetRange(newVal, start, end);
 
-            if (UseSavestates)
+            if (UseSavestates && ind.parent.fStates.Length != 0)
                 ind.SkippingState = ind.parent.fStates[Min(start, ind.parent.fStates.Length - 1)];
         }
 
         #endregion
 
-        public float[] favorite;
-
-        Individual CopyFavorite()
-        {
-            float[] newArr = new float[sett.Framecount];
-            Array.Copy(favorite, newArr, sett.Framecount);
-            return new Individual(newArr);
-        }
+        public AngleSet favorite;
 
         public FrameGenesGA(Settings s, int upToFrame)
         {
@@ -199,14 +184,14 @@ namespace Featherline
 
             mutationMagnitude = sett.MutationMagnitude;
 
-            favorite = GAManager.ParseFavorite(s.Favorite, s.Framecount);
+            favorite = ParseFavorite(s.Favorite, s.Framecount);
             inds = favorite == null
-                ? new Individual[sett.Population].Select(i => new Individual(sett.Framecount)).ToArray()
-                : new int[sett.Population].Select(i => CopyFavorite()).ToArray();
-            sim = new FeatherSim(sett);
+                ? new FrameInd[sett.Population].Select(i => new FrameInd(new AngleSet(sett.Framecount).Randomize())).ToArray()
+                : new int[sett.Population].Select(i => new FrameInd(favorite.Clone())).ToArray();
 
             if (favorite == null)
                 foreach (var ind in inds) {
+                    var sim = new FeatherSim(sett);
                     sim.SimulateIndivitual(ind.genes, false, upToFrame);
                     sim.Evaluate(out var fitness, out _);
                     ind.fitness = fitness;
@@ -216,40 +201,40 @@ namespace Featherline
         public double GetBestFitness() => inds[0].fitness;
         public void PrintBestIndividual() => PrintFromFrameGenes(inds[0].genes);
 
-        public void PrintFromFrameGenes(float[] genes)
+        public void PrintFromFrameGenes(AngleSet genes)
         {
             if (!sett.EnableSteepTurns)
-                new FeatherSim(GAManager.settings).SimulateIndivitual(genes, true);
+                new FeatherSim(settings).SimulateIndivitual(genes, true);
 
             Console.WriteLine(GAManager.FrameGenesToString(genes));
         }
 
-        public float[] GetBestIndividual() => inds[0].genes;
+        public AngleSet GetBestIndividual() => inds[0].genes;
+    }
 
-        public class Individual
+    public class FrameInd
+    {
+        public AngleSet genes;
+        public double fitness = -999999;
+
+        private Savestate skippingState = null;
+        public Savestate SkippingState
         {
-            public float[] genes;
-            public double fitness = -999999;
-
-            private Savestate skippingState = null;
-            public Savestate SkippingState {
-                get { return skippingState?.Copy(); }
-                set { skippingState = value; }
-            }
-
-            public Savestate[] fStates = null;
-            public Individual parent = null;
-
-            public Individual(int fCount) => genes = new float[fCount].Select(n => (float)(rand.NextDouble() * 360d)).ToArray();
-            public Individual(float[] genes) => this.genes = genes;
+            get { return skippingState?.Copy(); }
+            set { skippingState = value; }
         }
+
+        public Savestate[] fStates = null;
+        public FrameInd parent = null;
+
+        public FrameInd(int fCount) => genes = new AngleSet(new float[fCount].Select(n => (float)(rand.NextDouble() * Revolution)).ToArray());
+        public FrameInd(AngleSet genes) => this.genes = genes;
     }
 
     public class LineGenesGA
     {
         public LineInd[] inds;
         private Settings sett;
-        private ParallelOptions paralOpt;
 
         public int indLength;
         public int[] timings;
@@ -259,11 +244,11 @@ namespace Featherline
         private int earliestMutateableAngle;
         private int lastMutateableAngle;
 
-        public void DoGeneration(int earliestMutTurn = 0, int runToTurnPoint = 9999999)
+        public void DoGeneration(int earliestMutTurn = 0, int runToTiming = 9999999)
         {
             earliestMutateableAngle = earliestMutTurn;
-            lastMutateableAngle = runToTurnPoint;
-            int runToFrame = runToTurnPoint >= timings.Length ? indLength : timings[runToTurnPoint];
+            lastMutateableAngle = runToTiming;
+            int runToFrame = runToTiming >= timings.Length ? indLength : timings[runToTiming];
 
             GenerateNewChildren();
 
@@ -353,31 +338,21 @@ namespace Featherline
             }
         }
 
-        private void Mutate(LineInd ind)           
+        private void Mutate(LineInd ind)
         {
             int mutCount = rand.Next(sett.MaxMutChangeCount);
             int earliestChange = 99999999;
             for (int i = 0; i <= mutCount; i++) {
-
                 // adjust actual line angle
                 if (rand.Next(3) != 0) {
                     int target = rand.Next(earliestMutateableAngle, Min(ind.angles.Length, lastMutateableAngle));
-                    float increment = ((float)rand.NextDouble() * 2 - 1) * sett.MutationMagnitude;
-
-                    float angle = ind.angles[target] + increment;
-                    angle = angle < 0 ? angle + 360 : angle;
-                    angle = angle >= 360 ? angle - 360 : angle;
-                    angle = (float)Round(angle, 3);
-
-                    ind.angles[target] = angle;
-
+                    ind.angles[target] += ((float)rand.NextDouble() * 2 - 1) * sett.MutationMagnitude;
                     earliestChange = target == 0 ? -1 : Min(timings[target - 1], earliestChange);
                 }
-
                 // adjust end of line extra
                 else {
-                    int target = rand.Next(Max(0, earliestMutateableAngle - 1), Min(ind.borderExtras.Length, lastMutateableAngle));
-                    ind.borderExtras[target] = (float)rand.NextDouble() * 5.3334f;
+                    int target = rand.Next(Max(0, earliestMutateableAngle - 1), Min(ind.borders.Length, lastMutateableAngle));
+                    ind.borders[target] = (float)rand.NextDouble() * 5.334f;
 
                     earliestChange = Min(timings[target] - 1, earliestChange);
                 }
@@ -395,7 +370,7 @@ namespace Featherline
             int skipStateIndex = timings[index - 1] - 2;
             bool ableToAddSkipState = skipStateIndex >= 0;
 
-            c1.CloneFrom(new LineInd(p1.angles[..index].Concat(p2.angles[index..]).ToArray(), p1.borderExtras[..index].Concat(p2.borderExtras[index..]).ToArray()));
+            c1.CloneFrom(new LineInd(p1.angles[..index].Concat(p2.angles[index..]), p1.borders[..index].Concat(p2.borders[index..])));
             if (ableToAddSkipState) {
                 c1.parent = p1;
                 c1.states = null;
@@ -403,7 +378,7 @@ namespace Featherline
             }
 
             if (!(c2 is null)) {
-                c2.CloneFrom(new LineInd(p2.angles[..index].Concat(p1.angles[index..]).ToArray(), p2.borderExtras[..index].Concat(p1.borderExtras[index..]).ToArray()));
+                c2.CloneFrom(new LineInd(p2.angles[..index].Concat(p1.angles[index..]), p2.borders[..index].Concat(p1.borders[index..])));
                 if (ableToAddSkipState) {
                     c2.parent = p2;
                     c2.states = null;
@@ -414,15 +389,14 @@ namespace Featherline
 
         #endregion
 
-        public LineGenesGA(Settings s, int[] turnPoints, float[] lineAngles)
+        public LineGenesGA(Settings s, int[] timings, AngleSet lineAngles)
         {
             sett = s;
-            paralOpt = new ParallelOptions() { MaxDegreeOfParallelism = sett.MaxThreadCount };
 
             crossoverProb = sett.SurvivorCount <= 1 ? 0 : sett.CrossoverProbability;
             crossoverProb /= (crossoverProb + sett.MutationProbability) * 2;
 
-            timings = turnPoints;
+            this.timings = timings;
             indLength = s.Framecount;
 
 
@@ -441,8 +415,8 @@ namespace Featherline
 
     public class LineInd
     {
-        public float[] borderExtras;
-        public float[] angles;
+        public AngleSet borders;
+        public AngleSet angles;
 
         public double fitness = -9999999999;
 
@@ -455,42 +429,48 @@ namespace Featherline
         public Savestate[] states = null;
         public LineInd parent = null;
 
-        public float[] ToFrameGenes(int duration, int[] timings)
+        public AngleSet ToFrameGenes(int duration, int[] timings)
         {
-            var res = new float[duration];
+            var res = new AngleSet(duration);
             int line = 0;
+
+            res.SetRange(angles[0], 0, timings.Length == 0 ? duration : timings[0]);
+            for (int i = 0; i < timings.Length; i++)
+                res.SetRange(angles[line + 1], timings[i], i == timings.Length - 1 ? duration : timings[i + 1]);
+
             for (int i = 0; i < res.Length; i++) {
                 line += line < timings.Length && i >= timings[line] ? 1 : 0;
                 res[i] = angles[line];
             }
-            for (line = 0; line < borderExtras.Length; line++) {
+            for (line = 0; line < borders.Length; line++) {
                 float angDiff = FeatherSim.DegreesDiff(angles[line], angles[line + 1]);
-                if (Abs(angDiff) > 5.334)
-                    res[timings[line] - 1] += angDiff > 0 ? borderExtras[line] : -borderExtras[line];
-                
-                    
+                if (Abs(angDiff) > 5.334) {
+                    res[timings[line] - 1] += angDiff > 0 ? borders[line] : -borders[line];
+                    /*float angle = (float)Round(res[timings[line] - 1] + (angDiff > 0 ? borders[line] : -borders[line]), 3);
+                    res[timings[line] - 1] = angle < 0f ? angle + Revolution : angle >= Revolution ? angle - Revolution : angle;*/
+                }
             }
-            return res;
+            return new AngleSet(res);
         }
 
         #region Constructors
 
-        public LineInd(float[] angles)
+        public LineInd(AngleSet angles)
         {
-            this.angles = (float[])angles.Clone();
-            borderExtras = new float[angles.Length - 1];
+            this.angles = angles.Clone();
+            borders = new AngleSet(angles.Length - 1);
         }
 
-        public LineInd(float[] angles, float[] borderExtras, bool cloneBorders = true)
+        public LineInd(AngleSet angles, AngleSet borders, bool cloneBorders = true)
         {
-            this.angles = (float[])angles.Clone();
-            this.borderExtras = cloneBorders ? (float[])borderExtras.Clone() : borderExtras;
+            this.angles = angles.Clone();
+            this.borders = cloneBorders ? borders.Clone() : borders;
         }
 
         public void CloneFrom(LineInd parent)
         {
-            Array.Copy(parent.angles, angles, angles.Length);
-            Array.Copy(parent.borderExtras, borderExtras, borderExtras.Length);
+            parent.angles.CopyTo(angles);
+            parent.borders.CopyTo(borders);
         }
 
         #endregion

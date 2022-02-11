@@ -15,7 +15,7 @@ namespace Featherline
 			CheckDeath = Level.HasHazards ? (Action)DeathCheck : () => { };
 		}
 
-		public void Debug(float[] ind)
+		public void Debug(AngleSet ind)
         {
 			this.ind = ind;
 			cleaningInputs = false;
@@ -31,14 +31,14 @@ namespace Featherline
 
 		private FState si;
 		private WindState wind;
-		private float[] ind;
+		private AngleSet ind;
 
 		private (float closestDist, int atFrame) fitEval = (9999999, 0);
 
 		private bool cleaningInputs;
 		private bool stop = false;
 
-		public void SimulateIndivitual(float[] ind, bool cleaningInputs = false, int frameCount = 99999999, Savestate ss = null)
+		public void SimulateIndivitual(AngleSet ind, bool cleaningInputs = false, int frameCount = 99999999, Savestate ss = null)
 		{
 			this.ind = ind;
 			this.cleaningInputs = cleaningInputs;
@@ -83,12 +83,12 @@ namespace Featherline
 			wind = new WindState();
 
 			if (sett.DefineStartBoost) {
-				si.aim = new Vector2(sett.BoostX, sett.BoostY);
-				si.spd = si.aim;
+				//si.aim = new Aim(sett.BoostX, BoostY)new Vector2(sett.BoostX, sett.BoostY);
+				si.spd = new Vector2(sett.BoostX, sett.BoostY);
 			}
 			else {
-				si.aim = Vector2.FromTasAngle(ind[si.f], 1);
-				si.spd = si.aim * 250;
+				//si.aim = Vector2.FromTasAngle(ind[si.f], 1);
+				si.spd = PreCalc.GetAim(ind[si.f]).Value * 250;
 
 				UpdatePosition();
 				si.f++;
@@ -106,7 +106,7 @@ namespace Featherline
 
 			InputCleaning();
 
-			si.aim = Vector2.FromTasAngle(aim, 1);
+			si.aim = PreCalc.GetAim(aim);//Vector2.FromTasAngle(aim, 1);
 			UpdateAngle();
 			si.f++;
 
@@ -203,7 +203,7 @@ namespace Featherline
 
 			public Vector2 pos;
 			public Vector2 previousPos;
-			public Vector2 aim;
+			public Aim aim;
 			public Vector2 spd;
 
 			public int checkpointsGotten = 0;
@@ -296,14 +296,14 @@ namespace Featherline
 		private void UpdateAngle()
 		{
 			Vector2 vector = si.spd.NormalizeAndCopy();
-			vector = RotateTowards(vector, si.aim.Angle(), 5.5850534f * DeltaTime); // 5.33334 degrees
+			vector = RotateTowards(vector, si.aim.Angle, 5.5850534f * DeltaTime); // 5.33334 degrees
 
 			object a = "abc";
 			object b = 10;
 
 			// curving and speed acceleration
 			float target;
-			if (!sett.EnableSteepTurns || Vector2.Dot(vector, si.aim) >= .45f) // angle after rotating < acos(.45)
+			if (!sett.EnableSteepTurns || Vector2.Dot(vector, si.aim.Value) >= .45f) // angle after rotating < acos(.45)
 			{
 				si.speedLerp = Approach(si.speedLerp, 1f, DeltaTime / 1f);
 				target = Lerp(140f, 190f, si.speedLerp);

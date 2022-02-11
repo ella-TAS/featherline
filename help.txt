@@ -19,12 +19,11 @@ Then run the TAS over those commands to create/update infodump.txt in your Celes
 
 3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
 
-4: Either define a checkpoint at every major turn of the part you want to TAS,
+4: Either define a checkpoint at every major turn or branching path of the part you want to TAS,
 or give the program initial inputs to work with then define one checkpoint as the ending.
 Checkpoints are further explained later in this file.
 
 5: Click the Run Algorithm button.
-
 
 
 --- Checkpoints ---
@@ -39,3 +38,20 @@ Checkpoints are further explained later in this file.
   If the next checkpoint is behind a wall of spinners, it will simply fly towards that
   wall of spinners and try to get as close to the checkpoint as it can that way.
   That means you should define a checkpoint at every major turn so it knows where to go.
+
+
+--- Custom Hitboxes ---
+
+- Defined the same way as checkpoints.
+- A defined checkpoint is a killbox by default, based on the green hurtbox.
+- To define a collider (based on the red collision box) instead of a killbox, place "c" after the definition.
+  Example: "218, -104, 234, -72 c"
+
+
+--- Supported Gameplay Mechanics ---
+
+- anything with a static spinner hitbox, spikes and lightning
+- Wind and wind triggers
+- Dodging or bouncing off walls. Block entities work but have to be defined manually.
+- Jumpthroughs
+- Correct physics with room bounds

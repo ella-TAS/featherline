@@ -17,6 +17,9 @@ namespace Featherline
         private int framesSinceColliderFilter = 999;
         private RectangleHitbox[] distFiltColls;
 
+        private NormalJT[] distFiltNormalJTs;
+        private CustomJT[] distFiltCustomJTs;
+
         private void DeathCheck()
         {
             framesSinceDistFilter++;
@@ -81,14 +84,41 @@ namespace Featherline
         private void UpdatePosition()
         {
             if (++framesSinceColliderFilter >= 5) {
-                distFiltColls = Colliders.Where(coll => coll.GetActualDistance(si.intPos) < 30).ToArray();
+                var dummyPos = new IntVec2(si.pos + (wind.current * 5 * DeltaTime));
+
+                distFiltColls = Colliders.Where(coll => coll.GetActualDistance(dummyPos) < 30).ToArray();
+                distFiltNormalJTs = NormalJTs.Where(JT => JT.GetActualDistance(dummyPos) < 30).ToArray();
+                distFiltCustomJTs = CustomJTs.Where(JT => JT.GetActualDistance(dummyPos) < 30).ToArray();
+
                 framesSinceColliderFilter = 0;
             }
+
+            foreach (var JT in distFiltNormalJTs)
+                if (JT.Pulling(si.intPos, si.spd)) {
+                    si.pos.Y -= 40 * DeltaTime;
+                    break;
+                }
 
             int L, R, U, D;
 
             XMove();
             YMove();
+
+            foreach (var JT in distFiltCustomJTs) {
+                if (JT.Pulling(si.intPos, si.spd)) {
+                    si.pos += JT.pullVector;
+                    si.UpdateIntPos();
+                    continue;
+                }
+                if (JT.Booped(si)) {
+                    wallboops.Add(si.f);
+                    return;
+                }
+            }
+            foreach (var JT in distFiltNormalJTs) {
+                wallboops.Add(si.f);
+                return;
+            }
 
             void XMove()
             {
@@ -105,7 +135,7 @@ namespace Featherline
                         wallboops.Add(si.f);
                         BounceX(si.spd.X > 0
                             ? distFiltColls[i].bounds.L - 1
-                            : distFiltColls[i].bounds.R + 1);
+                            : distFiltColls[i].bounds.R);
                         return;
                     }
                 }
@@ -148,7 +178,7 @@ namespace Featherline
                         wallboops.Add(si.f);
                         BounceY(si.spd.Y > 0
                             ? distFiltColls[i].bounds.U - 1
-                            : distFiltColls[i].bounds.D + 1);
+                            : distFiltColls[i].bounds.D);
                         return;
                     }
                 }

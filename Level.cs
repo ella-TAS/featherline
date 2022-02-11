@@ -25,9 +25,18 @@ namespace Featherline
 
         public static RectangleHitbox[] Colliders;
 
+        public static NormalJT[] NormalJTs;
+        public static CustomJT[] CustomJTs;
+
         public static Checkpoint[] Checkpoints;
 
         static Settings srcSett;
+
+        private static Regex getIntPair = new Regex(@"(-?\d+)\.?\d*, (-?\d+)\.?\d*");
+        private static IntVec2 MatchToIntVec2(Match src) => new IntVec2(int.Parse(src.Groups[1].Value), int.Parse(src.Groups[2].Value));
+        private static IntVec2[] GetIntPairs(string src) => getIntPair.Matches(src).Select(MatchToIntVec2).ToArray();
+        private static bool[] GetBools(string src) => Regex.Matches(src, @"True|False").Select(s => s.Value == "True").ToArray();
+
         public static void Prepare(Settings sourceSettings)
         {
             Colliders = new RectangleHitbox[0];
@@ -35,14 +44,18 @@ namespace Featherline
 
             srcSett = sourceSettings;
             string src = File.ReadAllText(srcSett.InfoFile);
-            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)Bounds:(.*)");
+            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)JThruUL:(.*)Bounds:(.*)");
+
+            if (!split.Success)
+                throw new Exception("Unable to parse information from infodump.txt");
 
             GetPosAndSpd(split.Groups[1].Value);
             GetSpinners(split.Groups[2].Value);
             GetLightning(split.Groups[3].Value, split.Groups[4].Value);
             GetSpikes(split.Groups[5].Value, split.Groups[6].Value, split.Groups[7].Value);
             GetWind(split.Groups[8].Value, split.Groups[9].Value, split.Groups[10].Value, split.Groups[11].Value, split.Groups[12].Value);
-            GetSolidTiles(split.Groups[13].Value);
+            GetJumpThrus(split.Groups[13].Value);
+            GetSolidTiles(split.Groups[14].Value);
 
             srcSett.ManualHitboxes ??= new string[0];
             GetCustomHitboxes();
@@ -87,9 +100,14 @@ namespace Featherline
 
         private static void GetSpikes(string UL, string DR, string dir)
         {
-            var getUL = getIntPair.Matches(UL);
-            var getDR = getIntPair.Matches(DR);
+            var ULs = GetIntPairs(UL);
+            var DRs = GetIntPairs(DR);
             var getDir = Regex.Matches(dir, @"Left|Right|Up|Down");
+
+            Spikes = ULs.Select((v, i) => new Spike(new Bounds(v, DRs[i]).Expand(false), getDir[i].Value)).ToArray();
+
+            /*var getUL = getIntPair.Matches(UL);
+            var getDR = getIntPair.Matches(DR);
 
             Spikes = getUL.Select((m, i) => new Spike(new Bounds(
                     int.Parse(m.Groups[1].Value),
@@ -98,7 +116,35 @@ namespace Featherline
                     int.Parse(getDR[i].Groups[2].Value)
                     ).Expand(false),
                     getDir[i].Value
-                )).ToArray();
+                )).ToArray();*/
+        }
+
+        private static void GetJumpThrus(string src)
+        {
+            var split = Regex.Match(src,
+                @"(.*)JThruDR:(.*)SideJTUL:(.*)SideJTDR:(.*)SideJTIsRight:(.*)SideJTPushes:(.*)UpsDJTUL:(.*)UpsDJTDR:(.*)UpsDJTPushes:(.*)");
+
+            IntVec2[] normalULs = GetIntPairs(split.Groups[1].Value);
+            IntVec2[] normalDRs = GetIntPairs(split.Groups[2].Value);
+            IntVec2[] sideULs = GetIntPairs(split.Groups[3].Value);
+            IntVec2[] sideDRs = GetIntPairs(split.Groups[4].Value);
+            bool[] sidesToR = GetBools(split.Groups[5].Value);
+            bool[] sidesPush = GetBools(split.Groups[6].Value);
+            IntVec2[] upsDULs = GetIntPairs(split.Groups[7].Value);
+            IntVec2[] upsDDRs = GetIntPairs(split.Groups[8].Value);
+            bool[] upsDPush = GetBools(split.Groups[9].Value);
+
+            NormalJTs = normalULs.Select((v, i) => new NormalJT(new Bounds(v, normalDRs[i]).Expand(true))).ToArray();
+
+            CustomJTs = new CustomJT[sideULs.Length + upsDULs.Length];
+
+            for (int i = 0; i < sideULs.Length; i++)
+                CustomJTs[i] = new CustomJT(new Bounds(sideULs[i], sideDRs[i]).Expand(true),
+                    sidesToR[i] ? Facings.Right : Facings.Left, sidesPush[i]);
+
+            for (int i = 0; i < upsDULs.Length; i++)
+                CustomJTs[sideULs.Length + i] = new CustomJT(new Bounds(upsDULs[i], upsDDRs[i]).Expand(true),
+                    Facings.Down, upsDPush[i]);
         }
 
         private static void GetWind(string init, string positions, string patterns, string widths, string heights)
@@ -267,9 +313,6 @@ namespace Featherline
                 return res;
             }
         }
-
-        private static Regex getIntPair = new Regex(@"(-?\d+)\.?\d*, (-?\d+)\.?\d*");
-        private static IntVec2 MatchToIntVec2(Match src) => new IntVec2(int.Parse(src.Groups[1].Value), int.Parse(src.Groups[2].Value));
 
         private static void GetCustomHitboxes()
         {

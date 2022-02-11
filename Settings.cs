@@ -112,7 +112,7 @@ namespace Featherline
         public float MutationProbability = 2;
         public float SimplificationProbability = 1;
 
-        public float MutationMagnitude = 5;
+        public float MutationMagnitude = 8;
         public int MaxMutChangeCount = 5;
 
         public string[] Checkpoints;

@@ -122,4 +122,12 @@ namespace Featherline
         public int rightBound;
         public int lowestYIndex;
     }
+
+    public enum Facings
+    {
+        Left = 0,
+        Up = 1,
+        Right = 2,
+        Down = 3
+    }
 }

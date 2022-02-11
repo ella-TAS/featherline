@@ -19,6 +19,9 @@ namespace Featherline
         public static int generation;
 
         static FrameGenesGA ga;
+
+        public const float Revolution = 360f;
+
         public static void BeginAlgorithm(Form1 sender, bool debugFavorite)
         {
             if (!InitializeAlgorithm(sender)) {
@@ -98,6 +101,7 @@ namespace Featherline
 
             settings = Form1.settings.Copy();
             MyParallel.Initialize(settings);
+            PreCalc.Initialize();
             return true;
         }
 
@@ -145,21 +149,21 @@ namespace Featherline
 
         #region InputConverting
 
-        public static float[] ParseFavorite(string src, int targetLen)
+        public static AngleSet ParseFavorite(string src, int targetLen)
         {
-            float[] res = RawFavorite(src);
+            var res = RawFavorite(src);
 
             if (res is null) return null;
 
             if (res.Length > targetLen)
-                res = res.Take(targetLen).ToArray();
+                return res.Take(targetLen).ToAngleSet();
             else if (res.Length < targetLen)
-                res = res.Concat(new float[targetLen - res.Length].Select(n => (float)(rand.NextDouble() * 360))).ToArray();
+                return res.Concat(new float[targetLen - res.Length].Select(n => (float)(rand.NextDouble() * Revolution))).ToAngleSet();
 
-            return res;
+            return res.ToAngleSet();
         }
 
-        public static float[] RawFavorite(string src)
+        public static AngleSet RawFavorite(string src)
         {
             float[] res = { };
 
@@ -171,10 +175,10 @@ namespace Featherline
                 var angle = float.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture);
                 res = res.Concat(Enumerable.Repeat(angle, fCount)).ToArray();
             }
-            return res;
+            return res.ToAngleSet();
         }
 
-        public static string FrameGenesToString(float[] inputs)
+        public static string FrameGenesToString(AngleSet inputs)
         {
             var sb = new StringBuilder();
 
@@ -209,6 +213,10 @@ namespace Featherline
             settings = null;
             ga = null;
             AnglePerfector.baseInfo = null;
+            AnglePerfector.baseInfoWallboops = null;
+            PreCalc.Reset();
+            Level.NormalJTs = null;
+            Level.CustomJTs = null;
             GC.Collect();
         }
     }

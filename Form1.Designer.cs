@@ -596,8 +596,7 @@ namespace Featherline
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
-            this.Text = "Featherline";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Text = "Featherline " + version;
             ((System.ComponentModel.ISupportInitialize)(this.num_population)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_generations)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_survivorCount)).EndInit();

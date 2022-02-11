@@ -50,7 +50,7 @@ namespace Featherline
 
 
             for (int i = 0; i < 5; i++) {
-                var oldBorderExtras = (float[])current.borderExtras.Clone(); 
+                var oldBorderExtras = current.borders.Clone(); 
 
                 farthestSurvival = startingAt - 1;
                 for (; optimizingAt < timings.Length; optimizingAt++) {
@@ -60,7 +60,7 @@ namespace Featherline
                     bool improvement = current.fitness > best.fitness;
                     if (improvement) {
                         best = current;
-                        current = new LineInd(best.angles, best.borderExtras);
+                        current = new LineInd(best.angles, best.borders);
                     }
                     improvedBorders[optimizingAt] = improvement;
 
@@ -70,7 +70,7 @@ namespace Featherline
 
                 optimizingAt = 0;
 
-                if (current.borderExtras.SequenceEqual(oldBorderExtras))
+                if (current.borders.SequenceEqual(oldBorderExtras))
                     goto End;
             }
 
@@ -87,7 +87,7 @@ namespace Featherline
 
         private LineInd PerfectBorderAt(LineInd ind, int borderIndex, out int survival)
         {
-            var angles = Enumerable.Range(0, 9).Select(n => n * MaxFrameSteer / 8).ToArray();
+            var possibilities = Enumerable.Range(0, 9).Select(n => n * MaxFrameSteer / 8).ToArray();
             var inds = new LineInd[9];
 
             int farthestSurvival = 0;
@@ -101,15 +101,15 @@ namespace Featherline
                 return inds[best];
             }
 
-            float lowerBound = best == 0 ? -5 : angles[best - 1];
-            float upperBound = best == 8 ? 10 : angles[best + 1];
+            float lowerBound = best == 0 ? -5 : possibilities[best - 1];
+            float upperBound = best == 8 ? 10 : possibilities[best + 1];
 
             survival = farthestSurvival;
-            return BorderTestNode(borderIndex, lowerBound, upperBound, inds[best], angles[best]);
+            return BorderTestNode(borderIndex, lowerBound, upperBound, inds[best], possibilities[best]);
             void GetInd(int i)
             {
-                var candidate = new LineInd(ind.angles, ind.borderExtras);
-                candidate.borderExtras[borderIndex] = (float)Math.Round(angles[i], 3);
+                var candidate = new LineInd(ind.angles, ind.borders);
+                candidate.borders[borderIndex] = possibilities[i];
                 AdjustAngles(candidate, borderIndex, out int survive);
                 farthestSurvival = Math.Max(survive, farthestSurvival);
                 var sim = new FeatherSim(settings);
@@ -182,8 +182,8 @@ namespace Featherline
             void GetInd(int i)
             {
                 if (i != centerIndex) {
-                    var candidate = new LineInd(this.best.angles, this.best.borderExtras);
-                    candidate.borderExtras[borderIndex] = (float)Math.Round(angles[i], 3);
+                    var candidate = new LineInd(this.best.angles, this.best.borders);
+                    candidate.borders[borderIndex] = (float)Math.Round(angles[i], 3);
                     AdjustAngles(candidate, borderIndex, out int survival);
                     farthestSurvival = Math.Max(survival, farthestSurvival);
                     var sim = new FeatherSim(settings);
@@ -278,7 +278,7 @@ namespace Featherline
                 bool TestAngle(out bool equal)
                 {
                     float originalAngle = ind.angles[index];
-                    SetAngle((float)Math.Round(ind.angles[index] + incr, 3));
+                    SetAngle(ind.angles[index] + incr);
 
                     var res = GetFitness();
 
@@ -380,7 +380,7 @@ namespace Featherline
             bool TryAngle(out Vector2 endPos)
             {
                 float originalAngle = ind.angles[index];
-                SetAngle((float)Math.Round(ind.angles[index] + increment, 3));
+                SetAngle(ind.angles[index] + increment);
 
                 bool failed = CurrentFails(out endPos);
 
@@ -408,11 +408,7 @@ namespace Featherline
 
             float GetAngleDiff() => FeatherSim.DegreesDiff(ind.angles[index], ind.angles[checkingIndex]);
 
-            void SetAngle(float a)
-            {
-                for (int i = index; i < checkingIndex; i++)
-                    ind.angles[i] = a;
-            }
+            void SetAngle(float a) => ind.angles.SetRange(a, index, checkingIndex);
         }
 
         private int IndexTimings(int i) => i == -1 ? 0 : i >= timings.Length ? indLen : timings[i];
@@ -422,7 +418,7 @@ namespace Featherline
         public AnglePerfector(SavedTiming src, float precision, int changedTiming, Settings settings)
         {
             this.precision = precision * 1.01f;
-            best = new LineInd(src.ind.angles, src.ind.borderExtras);
+            best = new LineInd(src.ind.angles, src.ind.borders);
             current = best;
             timings = (int[])src.timings.Clone();
             indLen = settings.Framecount;

@@ -19,7 +19,7 @@ namespace Featherline
 
     public partial class FeatherSim
     {
-        public Savestate[] GetAllFrameData(float[] ind, out bool finishes, out int[] wallboops)
+        public Savestate[] GetAllFrameData(AngleSet ind, out bool finishes, out int[] wallboops)
         {
             this.ind = ind;
             cleaningInputs = false;
@@ -40,7 +40,7 @@ namespace Featherline
             return states.ToArray();
         }
 
-        public T TryGetInfoAtFrame<T>(float[] ind, int f, Func<bool, FState, WindState, T> GetInfo)
+        public T TryGetInfoAtFrame<T>(AngleSet ind, int f, Func<bool, FState, WindState, T> GetInfo)
         {
             this.ind = ind;
             cleaningInputs = false;
@@ -55,7 +55,7 @@ namespace Featherline
             return GetInfo(stop, si, wind);
         }
 
-        public bool TryGetStateAtFrame(float[] ind, int f, out Savestate state)
+        public bool TryGetStateAtFrame(AngleSet ind, int f, out Savestate state)
         {
             if (f < 0) {
                 state = null;
@@ -93,7 +93,8 @@ namespace Featherline
 
             if (si.checkpointsGotten < Level.Checkpoints.Length) {
                 while (si.f < f) {
-                    RunFrame(GetCurrentAngle());
+                    var angle = GetCurrentAngle();
+                    RunFrame(angle);
                     if (stop) break;
                 }
             }
@@ -105,8 +106,10 @@ namespace Featherline
                 if (si.f == nextTiming) {
                     float res = ind.angles[nextTimingIndex];
                     float angDiff = DegreesDiff(ind.angles[nextTimingIndex], ind.angles[nextTimingIndex + 1]);
-                    if (Math.Abs(angDiff) > 5.334)
-                        res += angDiff > 0 ? ind.borderExtras[nextTimingIndex] : -ind.borderExtras[nextTimingIndex];
+                    if (Math.Abs(angDiff) > 5.334) {
+                        res += angDiff > 0 ? ind.borders[nextTimingIndex] : -ind.borders[nextTimingIndex];
+                        res = res < 0f ? res + 360f : res >= 360f ? res - 360f : res;
+                    }
 
                     nextTimingIndex++;
                     nextTiming = nextTimingIndex == timings.Length ? 99999999 : timings[nextTimingIndex] - 1;

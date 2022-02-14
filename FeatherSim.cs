@@ -20,7 +20,7 @@ namespace Featherline
 			this.ind = ind;
 			cleaningInputs = false;
 
-			InitializeSim();
+			LoadSavestate(Level.StartState);
 
 			while (si.f < ind.Length) {
 				RunFrame(ind[si.f]);
@@ -29,7 +29,7 @@ namespace Featherline
 			}
 		}
 
-		private FState si;
+		private FeatherState si;
 		private WindState wind;
 		private AngleSet ind;
 
@@ -38,17 +38,14 @@ namespace Featherline
 		private bool cleaningInputs;
 		private bool stop = false;
 
-		public void SimulateIndivitual(AngleSet ind, bool cleaningInputs = false, int frameCount = 99999999, Savestate ss = null)
+		public FeatherSim SimulateIndivitual(AngleSet ind, bool cleaningInputs = false, int frameCount = 99999999, Savestate ss = null)
 		{
 			this.ind = ind;
 			this.cleaningInputs = cleaningInputs;
 
 			frameCount = Math.Min(ind.Length, frameCount);
 
-			if (ss == null)
-				InitializeSim();
-			else
-				LoadSavestate(ss);
+			LoadSavestate(ss ?? Level.StartState);
 
 			if (si.checkpointsGotten < Level.Checkpoints.Length) {
 				while (si.f < frameCount) {
@@ -56,6 +53,8 @@ namespace Featherline
 					if (stop) break;
 				}
 			}
+
+			return this;
 		}
 
 		public void Evaluate(out double fitness, out int fCount)
@@ -72,32 +71,6 @@ namespace Featherline
 				fitness = cpExtras - fitEval.closestDist * 2d - fitEval.atFrame - nextCpDist - si.f;
 				fCount = sett.Framecount;
 			}
-		}
-
-		private void InitializeSim()
-		{
-			si = new FState();
-			si.pos = new Vector2(sett.StartX, sett.StartY);
-			si.UpdateIntPos();
-
-			wind = new WindState();
-
-			if (sett.DefineStartBoost) {
-				//si.aim = new Aim(sett.BoostX, BoostY)new Vector2(sett.BoostX, sett.BoostY);
-				si.spd = new Vector2(sett.BoostX, sett.BoostY);
-			}
-			else {
-				//si.aim = Vector2.FromTasAngle(ind[si.f], 1);
-				si.spd = PreCalc.GetAim(ind[si.f]).Value * 250;
-
-				UpdatePosition();
-				si.f++;
-			}
-
-			si.intPos.X = (int)Math.Round(si.pos.X);
-			si.intPos.Y = (int)Math.Round(si.pos.Y);
-
-			WindFrame();
 		}
 
 		private void RunFrame(float aim)
@@ -196,60 +169,6 @@ namespace Featherline
 			si = ss.fState;
 		}
 
-		public class FState
-		{
-			public int f = 0;
-			public float speedLerp = 0f;
-
-			public Vector2 pos;
-			public Vector2 previousPos;
-			public Aim aim;
-			public Vector2 spd;
-
-			public int checkpointsGotten = 0;
-
-			public IntVec2 intPos = new IntVec2();
-			public void UpdateIntPos()
-			{
-				intPos.X = (int)Math.Round(pos.X);
-				intPos.Y = (int)Math.Round(pos.Y);
-			}
-
-			public FState Copy()
-			{
-				return new FState() {
-					f = f,
-					speedLerp = speedLerp,
-					pos = pos,
-					aim = aim,
-					spd = spd,
-					checkpointsGotten = checkpointsGotten,
-					intPos = new IntVec2(intPos.X, intPos.Y)
-				};
-			}
-
-			public float GetDistToNextCp() =>
-				checkpointsGotten == Level.Checkpoints.Length - 1
-				? (float)Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos, previousPos)
-				: (float)Math.Sqrt(
-					Math.Pow(Level.Checkpoints[checkpointsGotten].center.X - pos.X, 2)
-				  + Math.Pow(Level.Checkpoints[checkpointsGotten].center.Y - pos.Y, 2));
-
-            public void Print()
-            {
-				Console.Write($"f{f}, pos {pos}, ");
-				Console.ForegroundColor = ConsoleColor.Blue;
-				Console.Write($"spd {spd}, ");
-				Console.ForegroundColor = ConsoleColor.Yellow;
-				Console.Write($"angle {spd.TASAngle}, ");
-				Console.ForegroundColor = ConsoleColor.Green;
-				Console.Write($"lerp {speedLerp}, ");
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine($"aim {aim}");
-				Console.ForegroundColor = ConsoleColor.White;
-            }
-        }
-
 		public static Vector2 RotateTowards(Vector2 vec, float targetAngleRadians, float maxMoveRadians) =>
 			Vector2.AngleToVector(AngleApproach(vec.Angle(), targetAngleRadians, maxMoveRadians), vec.Length());
 
@@ -330,5 +249,59 @@ namespace Featherline
 		}
 
 		TurnState turning = TurnState.None;
+	}
+
+	public class FeatherState
+	{
+		public int f = 0;
+		public float speedLerp = 0f;
+
+		public Vector2 pos;
+		public Vector2 previousPos;
+		public Aim aim;
+		public Vector2 spd;
+
+		public int checkpointsGotten = 0;
+
+		public IntVec2 intPos = new IntVec2();
+		public void UpdateIntPos()
+		{
+			intPos.X = (int)Math.Round(pos.X);
+			intPos.Y = (int)Math.Round(pos.Y);
+		}
+
+		public FeatherState Copy()
+		{
+			return new FeatherState() {
+				f = f,
+				speedLerp = speedLerp,
+				pos = pos,
+				aim = aim,
+				spd = spd,
+				checkpointsGotten = checkpointsGotten,
+				intPos = new IntVec2(intPos.X, intPos.Y)
+			};
+		}
+
+		public float GetDistToNextCp() =>
+			checkpointsGotten == Level.Checkpoints.Length - 1
+			? (float)Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos, previousPos)
+			: (float)Math.Sqrt(
+				Math.Pow(Level.Checkpoints[checkpointsGotten].center.X - pos.X, 2)
+			  + Math.Pow(Level.Checkpoints[checkpointsGotten].center.Y - pos.Y, 2));
+
+		public void Print()
+		{
+			Console.Write($"f{f}, pos {pos}, ");
+			Console.ForegroundColor = ConsoleColor.Blue;
+			Console.Write($"spd {spd}, ");
+			Console.ForegroundColor = ConsoleColor.Yellow;
+			Console.Write($"angle {spd.TASAngle}, ");
+			Console.ForegroundColor = ConsoleColor.Green;
+			Console.Write($"lerp {speedLerp}, ");
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine($"aim {aim}");
+			Console.ForegroundColor = ConsoleColor.White;
+		}
 	}
 }

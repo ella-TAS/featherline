@@ -17,6 +17,7 @@ namespace Featherline
         {
             InitializeComponent();
             LoadSettings(ref settings);
+            Text = "Featherline " + version;
         }
 
         private void btn_beginAlg_Click(object sender, EventArgs e)
@@ -89,9 +90,11 @@ namespace Featherline
         {
             cbx_timingTestFavDirectly.Enabled = !cbx_frameBasedOnly.Checked;
             num_gensPerTiming.Enabled = !cbx_frameBasedOnly.Checked;
+            num_shuffleCount.Enabled = !cbx_frameBasedOnly.Checked;
         }
 
         private const string customInfoTemplate =
+            "Lerp: {Player.starFlySpeedLerp} " +
             "{CrystalStaticSpinner.Position}{DustStaticSpinner.Position}{FrostHelper.CustomSpinner@FrostTempleHelper.Position}{VivHelper.Entities.CustomSpinner@VivHelper.Position}{Celeste.Mod.XaphanHelper.Entities.CustomSpinner@XaphanHelper.Position} " +
             
             "LightningUL: {Lightning.TopLeft} " +

@@ -32,6 +32,10 @@ namespace Featherline
 
         static Settings srcSett;
 
+        private static Savestate startState;
+        public static Savestate StartState { get => startState.Copy(); }
+        public static bool defineStartBoost;
+
         private static Regex getIntPair = new Regex(@"(-?\d+)\.?\d*, (-?\d+)\.?\d*");
         private static IntVec2 MatchToIntVec2(Match src) => new IntVec2(int.Parse(src.Groups[1].Value), int.Parse(src.Groups[2].Value));
         private static IntVec2[] GetIntPairs(string src) => getIntPair.Matches(src).Select(MatchToIntVec2).ToArray();
@@ -44,17 +48,20 @@ namespace Featherline
 
             srcSett = sourceSettings;
             string src = File.ReadAllText(srcSett.InfoFile);
-            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)JThruUL:(.*)Bounds:(.*)");
+            var split = Regex.Match(src, @"(-?\d+\.?\d*, -?\d+\.?\d*\t-?\d+\.?\d*, -?\d+\.?\d*\t\w*\t\w*\s*Lerp:\s*-?\d+\.?\d*)(.*)LightningUL:(.*)LightningDR:(.*)SpikeUL:(.*)SpikeDR:(.*)SpikeDir:(.*)Wind:(.*)WTPos:(.*)WTPattern:(.*)WTWidth:(.*)WTHeight(.*)JThruUL:(.*)Bounds:(.*)");
 
             if (!split.Success)
                 throw new Exception("Unable to parse information from infodump.txt");
 
-            GetPosAndSpd(split.Groups[1].Value);
+            GetStartState(split.Groups[1].Value);
+
             GetSpinners(split.Groups[2].Value);
             GetLightning(split.Groups[3].Value, split.Groups[4].Value);
             GetSpikes(split.Groups[5].Value, split.Groups[6].Value, split.Groups[7].Value);
+
             GetWind(split.Groups[8].Value, split.Groups[9].Value, split.Groups[10].Value, split.Groups[11].Value, split.Groups[12].Value);
             GetJumpThrus(split.Groups[13].Value);
+
             GetSolidTiles(split.Groups[14].Value);
 
             srcSett.ManualHitboxes ??= new string[0];
@@ -62,18 +69,21 @@ namespace Featherline
             srcSett.Checkpoints ??= new string[0];
             GetCheckpoints();
 
-            CreateDangerBitMap();
+            CreateDangerBitfield();
         }
 
-        private static void GetPosAndSpd(string src)
+        private static void GetStartState(string src)
         {
-            Match m = Regex.Match(src, @"(-?\d+\.\d+), (-?\d+\.\d+)\t(-?\d+\.\d+), (-?\d+\.\d+)");
-            srcSett.StartX = float.Parse(m.Groups[1].Value);
-            srcSett.StartY = float.Parse(m.Groups[2].Value);
-            srcSett.BoostX = float.Parse(m.Groups[3].Value);
-            srcSett.BoostY = float.Parse(m.Groups[4].Value);
-            srcSett.DefineStartBoost = srcSett.BoostX != 0 || srcSett.BoostY != 0;
-            srcSett.StartAngle = new Vector2(srcSett.BoostX, srcSett.BoostY).TASAngle;
+            startState = new Savestate();
+
+            Match m = Regex.Match(src, @"(-?\d+\.\d+), (-?\d+\.\d+)\t(-?\d+\.\d+), (-?\d+\.\d+).*Lerp:(.*)");
+            startState.fState.pos.X = float.Parse(m.Groups[1].Value);
+            startState.fState.pos.Y = float.Parse(m.Groups[2].Value);
+            startState.fState.UpdateIntPos();
+            startState.fState.spd.X = float.Parse(m.Groups[3].Value);
+            startState.fState.spd.Y = float.Parse(m.Groups[4].Value);
+            startState.fState.speedLerp = float.Parse(m.Groups[5].Value);
+            defineStartBoost = startState.fState.spd.X != 0 || startState.fState.pos.Y != 0;
         }
 
         private static void GetSpinners(string src)
@@ -136,15 +146,18 @@ namespace Featherline
 
             NormalJTs = normalULs.Select((v, i) => new NormalJT(new Bounds(v, normalDRs[i]).Expand(true))).ToArray();
 
-            CustomJTs = new CustomJT[sideULs.Length + upsDULs.Length];
+            
+            var customJTs = new List<CustomJT>();
 
             for (int i = 0; i < sideULs.Length; i++)
-                CustomJTs[i] = new CustomJT(new Bounds(sideULs[i], sideDRs[i]).Expand(true),
-                    sidesToR[i] ? Facings.Right : Facings.Left, sidesPush[i]);
+                customJTs.Add(new CustomJT(new Bounds(sideULs[i], sideDRs[i]).Expand(true),
+                    sidesToR[i] ? Facings.Right : Facings.Left, sidesPush[i]));
 
             for (int i = 0; i < upsDULs.Length; i++)
-                CustomJTs[sideULs.Length + i] = new CustomJT(new Bounds(upsDULs[i], upsDDRs[i]).Expand(true),
-                    Facings.Down, upsDPush[i]);
+                customJTs.Add(new CustomJT(new Bounds(upsDULs[i], upsDDRs[i]).Expand(true),
+                    Facings.Down, false/*upsDPush[i]*/));
+
+            CustomJTs = customJTs.ToArray();
         }
 
         private static void GetWind(string init, string positions, string patterns, string widths, string heights)
@@ -189,7 +202,7 @@ namespace Featherline
             FeatherSim.doWind = InitWind.X != 0 || InitWind.Y != 0 || WindTriggers.Length != 0;
         }
 
-        private static void CreateDangerBitMap()
+        private static void CreateDangerBitfield()
         {
             try {
                 var hazards = Spinners.Select(s => new IntVec2(s.X / 8 * 8, s.Y / 8 * 8))
@@ -254,7 +267,7 @@ namespace Featherline
                         DeathMap.map[x][y] = true;
 
                     bool SingleSpinnerColl(int x, int y) =>
-                        Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 145
+                        Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 150d
                         && ((s.X - 7 < x && x < s.X + 7 && s.Y - 3 < y && y < s.Y + 15) || // tall
                             (s.X - 8 < x && x < s.X + 8 && s.Y - 2 < y && y < s.Y + 14) || // square
                             (s.X - 9 < x && x < s.X + 9 && s.Y - 1 < y && y < s.Y + 13) || // squished

@@ -36,7 +36,7 @@ namespace Featherline
         {
             if (si.intPos.X < DeathMap.xMin || si.intPos.X > DeathMap.xMax || si.intPos.Y < DeathMap.yMin || si.intPos.Y > DeathMap.yMax)
                 return false;
-            return DeathMap.map[(si.intPos.X + 2 - DeathMap.xMin) / 8][(si.intPos.Y - DeathMap.yMin) / 8];
+            return DeathMap.map[(si.intPos.X - DeathMap.xMin) / 8][(si.intPos.Y - DeathMap.yMin) / 8];
         }
 
         private void DistFilterHazards()
@@ -55,7 +55,7 @@ namespace Featherline
         private bool RawHazardCollision()
         {
             foreach (var s in distFiltSpinners)
-                if (Math.Pow(si.intPos.X - s.X, 2) + Math.Pow(si.intPos.Y - 4 - s.Y, 2) < 145
+                if (Math.Pow(si.intPos.X - s.X, 2) + Math.Pow(si.intPos.Y - 4 - s.Y, 2) < 150d
                 && ((s.X - 7 < si.intPos.X && si.intPos.X < s.X + 7 && s.Y - 3 < si.intPos.Y && si.intPos.Y < s.Y + 15) || // slightly tall
                     (s.X - 8 < si.intPos.X && si.intPos.X < s.X + 8 && s.Y - 2 < si.intPos.Y && si.intPos.Y < s.Y + 14) || // square
                     (s.X - 9 < si.intPos.X && si.intPos.X < s.X + 9 && s.Y - 1 < si.intPos.Y && si.intPos.Y < s.Y + 13) || // slightly squished
@@ -73,11 +73,11 @@ namespace Featherline
             return false;
         }
 
-        private bool RawSpinnerColl(int x, int y) => distFiltSpinners.Any(s => Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 145
+        /*private bool RawSpinnerColl(int x, int y) => distFiltSpinners.Any(s => Math.Pow(x - s.X, 2) + Math.Pow(y - 4 - s.Y, 2) < 145
             && ((s.X - 7 < x && x < s.X + 7 && s.Y - 3 < y && y < s.Y + 15) || // slightly tall
                 (s.X - 8 < x && x < s.X + 8 && s.Y - 2 < y && y < s.Y + 14) || // square
                 (s.X - 9 < x && x < s.X + 9 && s.Y - 1 < y && y < s.Y + 13) || // slightly squished
-                (s.X - 11 < x && x < s.X + 11 && s.Y < y && y < s.Y + 10))); // sideways bar
+                (s.X - 11 < x && x < s.X + 11 && s.Y < y && y < s.Y + 10))); // sideways bar*/
 
         public List<int> wallboops = new List<int>();
 

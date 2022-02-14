@@ -16,6 +16,7 @@ StartExportGameInfo infodump.txt
 FinishExportGameInfo
 
 Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.
+This same method works even if the start frame is in an already going feather.
 
 3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
 

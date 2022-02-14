@@ -291,7 +291,7 @@ namespace Featherline
         {
             if (timings[0] <= ind.states.Length) {
                 float firstAngDiff = timings[0] == 1
-                    ? ind.states[0].fState.spd.TASAngle - sett.StartAngle
+                    ? ind.states[0].fState.spd.TASAngle - Level.StartState.fState.spd.TASAngle
                     : ind.states[timings[0] - 1].fState.spd.TASAngle - ind.states[timings[0] - 2].fState.spd.TASAngle;
                 AdjustLine(0, firstAngDiff);
 
@@ -365,7 +365,7 @@ namespace Featherline
         
         private void Crossover(LineInd p1, LineInd p2, LineInd c1, LineInd c2)
         {
-            int index = rand.Next(earliestMutateableAngle + 1, Min(lastMutateableAngle, timings.Length + 1));
+            int index = rand.Next(earliestMutateableAngle + 1, Min(lastMutateableAngle, timings.Length) + 1);
 
             int skipStateIndex = timings[index - 1] - 2;
             bool ableToAddSkipState = skipStateIndex >= 0;

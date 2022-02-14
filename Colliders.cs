@@ -128,7 +128,7 @@ namespace Featherline
 
         public int axisFix;
 
-        public bool Booped(FeatherSim.FState fs)
+        public bool Booped(FeatherState fs)
         {
             if (IsBeyond(fs.pos))
                 return false;

@@ -33,7 +33,7 @@ namespace Featherline
             txt_infoFile.Text = settings.InfoFile;
             txt_initSolution.Text = settings.Favorite;
 
-            txt_customSpinners.Text = settings.customSpinnerNames;
+            txt_customSpinners.Text = settings.CustomSpinnerNames;
 
             cbx_avoidWalls.Checked = settings.AvoidWalls;
             cbx_enableSteepTurns.Checked = settings.EnableSteepTurns;
@@ -64,7 +64,7 @@ namespace Featherline
             settings.MutationMagnitude = (float)num_mutationMagnitude.Value;
             settings.MaxMutChangeCount = (int)num_mutChangeCount.Value;
 
-            settings.customSpinnerNames = txt_customSpinners.Text;
+            settings.CustomSpinnerNames = txt_customSpinners.Text;
 
             settings.AvoidWalls = cbx_avoidWalls.Checked;
             settings.EnableSteepTurns = cbx_enableSteepTurns.Checked;
@@ -100,13 +100,13 @@ namespace Featherline
         public int Generations = 5000;
         public int SurvivorCount = 20;
 
-        public float StartX;
-        public float StartY;
+        //public float StartX;
+        //public float StartY;
 
-        public bool DefineStartBoost;
-        public float BoostX;
-        public float BoostY;
-        public float StartAngle;
+        //public bool DefineStartBoost;
+        //public float BoostX;
+        //public float BoostY;
+        //public float StartAngle;
 
         public float CrossoverProbability = 1;
         public float MutationProbability = 2;
@@ -117,7 +117,7 @@ namespace Featherline
 
         public string[] Checkpoints;
 
-        public string customSpinnerNames;
+        public string CustomSpinnerNames;
 
         public bool AvoidWalls = true;
         public bool EnableSteepTurns = false;
@@ -126,7 +126,7 @@ namespace Featherline
 
         public bool FrameBasedOnly = false;
         public bool TimingTestFavDirectly = false;
-        public int GensPerTiming = 500;
+        public int GensPerTiming = 150;
 
         public int ShuffleCount = 2;
 

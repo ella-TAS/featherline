@@ -58,7 +58,7 @@ namespace Featherline
                     }
                 }
                 else {
-                    TT = new TimingTester(settings, ga.inds[0].genes);
+                    TT = new TimingTester(settings, ga.inds[0]);
                     TT.Run();
                 }
             }

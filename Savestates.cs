@@ -6,12 +6,18 @@ namespace Featherline
     public class Savestate
     {
         public WindState wind;
-        public FeatherSim.FState fState;
+        public FeatherState fState;
 
-        public Savestate(FeatherSim.FState fState, WindState wind)
+        public Savestate(FeatherState fState, WindState wind)
         {
             this.wind = wind.Copy();
             this.fState = fState.Copy();
+        }
+
+        public Savestate()
+        {
+            wind = new WindState();
+            fState = new FeatherState();
         }
 
         public Savestate Copy() => new Savestate(fState, wind);
@@ -24,7 +30,7 @@ namespace Featherline
             this.ind = ind;
             cleaningInputs = false;
 
-            InitializeSim();
+            LoadSavestate(Level.StartState);
             var states = new List<Savestate>();
 
             while (si.f < ind.Length) {
@@ -40,12 +46,12 @@ namespace Featherline
             return states.ToArray();
         }
 
-        public T TryGetInfoAtFrame<T>(AngleSet ind, int f, Func<bool, FState, WindState, T> GetInfo)
+        public T TryGetInfoAtFrame<T>(AngleSet ind, int f, Func<bool, FeatherState, WindState, T> GetInfo)
         {
             this.ind = ind;
             cleaningInputs = false;
 
-            InitializeSim();
+            LoadSavestate(Level.StartState);
 
             while (si.f < f) {
                 RunFrame(ind[si.f]);
@@ -67,12 +73,9 @@ namespace Featherline
             return stop;
         }
 
-        public T LineIndInfoAtFrame<T>(LineInd ind, int f, int[] timings, Func<bool, FState, WindState, T> GetInfo)
+        public T LineIndInfoAtFrame<T>(LineInd ind, int f, int[] timings, Func<bool, FeatherState, WindState, T> GetInfo)
         {
-            if (ind.SkippingState is null)
-                InitializeSim();
-            else
-                LoadSavestate(ind.SkippingState);
+            LoadSavestate(ind.SkippingState ?? Level.StartState);
 
             int nextTimingIndex = 0;
             int nextTiming = 0;
@@ -120,7 +123,7 @@ namespace Featherline
             }
         }
 
-        public double FitnessGetter(bool a, FState b, WindState c)
+        public double FitnessGetter(bool a, FeatherState b, WindState c)
         {
             Evaluate(out var res, out _);
             return res;

@@ -403,7 +403,7 @@ namespace Featherline
                     && cps < baseInfo[Math.Min(stateCheckFrame, baseInfo.Length - 1)].fState.checkpointsGotten)
                     return true;
 
-                return !TimingTester.ValidWallboops(baseInfoWallboops, wallboops);
+                return !TimingTester.ValidWallboops(baseInfoWallboops, wallboops, new IntRange(IndexTimings(index), stateCheckFrame));
             }
 
             float GetAngleDiff() => FeatherSim.DegreesDiff(ind.angles[index], ind.angles[checkingIndex]);

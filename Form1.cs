@@ -9,7 +9,7 @@ namespace Featherline
 {
     public partial class Form1 : Form
     {
-        public const string version = "0.2.3";
+        public const string version = "0.3.0";
 
         public static Settings settings;
 
@@ -43,41 +43,65 @@ namespace Featherline
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!File.Exists(helpFile)) {
-                var text = "\nTo get started with Featherline, follow these steps:\n\n" +
-                    "1: Click on Copy -> Info Template to copy the custom info template to your clipboard.\n" +
-                    "Then Right click on the info panel of celeste studio and click \"Set Custom Info Template From Clipboard\".\n" +
-                    "Also, entity watch would likely break it if you have it on.\n\n" +
-                    "2: Click on Copy -> Setup TAS Snippet to copy the info file creation script to your clipboard,\n" +
-                    "then paste it to your TAS. Then make sure you make the first frame of feather movement is in between the commands.\n" +
-                    "As an example:\n\n  13,R,U,X\n  26" +
-                    "\nStartExportGameInfo infodump.txt\n" +
-                    "   1,R,U\nFinishExportGameInfo\n\n" +
-                    "Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.\n\n" +
-                    "3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.\n\n" +
-                    "4: Either define a checkpoint at every major turn or branching path of the part you want to TAS,\n" +
-                    "or give the program initial inputs to work with then define one checkpoint as the ending.\n" +
-                    "Checkpoints are further explained later in this file.\n\n" +
-                    "5: Click the Run Algorithm button.\n\n\n" +
-                    "--- Checkpoints ---\n\n" +
-                    "- To define a checkpoint, hold your info HUD hotkey and drag while holding right click to draw a rectangle hitbox.\n" +
-                    "  Doing that will copy the selected area to your clipboard, where you can paste it to a line on the checkpoints text box.\n\n" +
-                    "- Checkpoint collision is based on your hurtbox. To define a touch switch or feather as a checkpoint, select\n" +
-                    "  an area that perfectly overlaps with its hitbox. Remember to use the pink, bigger hitbox for touch switches.\n\n" +
-                    "- The genetic algorithm primarily flies directly towards the next checkpoint.\n" +
-                    "  If the next checkpoint is behind a wall of spinners, it will simply fly towards that\n" +
-                    "  wall of spinners and try to get as close to the checkpoint as it can that way.\n" +
-                    "  That means you should define a checkpoint at every major turn so it knows where to go.\n\n\n" +
-                    "--- Custom Hitboxes ---\n\n" +
-                    "- Defined the same way as checkpoints.\n" +
-                    "- A defined checkpoint is a killbox by default, based on the green hurtbox.\n" +
-                    "- To define a collider (based on the red collision box) instead of a killbox, place \"c\" after the definition.\n" +
-                    "  Example: \"218, -104, 234, -72 c\"\n\n\n" +
-                    "--- Supported Gameplay Mechanics ---\n\n" +
-                    "- anything with a static spinner hitbox, spikes and lightning\n" +
-                    "- Wind and wind triggers\n" +
-                    "- Dodging or bouncing off walls. Block entities work but have to be defined manually.\n" +
-                    "- Jumpthroughs\n" +
-                    "- Correct physics with room bounds\n";
+                var text = @"
+To get started with Featherline, follow these steps:
+
+1: Click on Copy -> Info Template to copy the custom info template to your clipboard.
+Then Right click on the info panel of celeste studio and click 'Set Custom Info Template From Clipboard'.
+Also, entity watch would likely break it if you have it on.
+
+2: Click on Copy -> Setup TAS Snippet to copy the info file creation script to your clipboard,
+then paste it to your TAS. Then make sure you make the first frame of feather movement is in between the commands.
+As an example:
+
+  13,R,U,X
+  26
+StartExportGameInfo infodump.txt
+   1,R,U
+FinishExportGameInfo
+
+Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.
+This same method works even if the start frame is in an already going feather.
+
+3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
+
+4: Either define a checkpoint at every major turn or branching path of the part you want to TAS,
+or give the program initial inputs to work with then define one checkpoint as the ending.
+Checkpoints are further explained later in this file.
+
+5: Click the Run Algorithm button.
+
+
+--- Checkpoints ---
+
+- To define a checkpoint, hold your info HUD hotkey and drag while holding right click to draw a rectangle hitbox.
+  Doing that will copy the selected area to your clipboard, where you can paste it to a line on the checkpoints text box.
+
+- Checkpoint collision is based on your hurtbox. To define a touch switch or feather as a checkpoint, select
+  an area that perfectly overlaps with its hitbox. Remember to use the pink, bigger hitbox for touch switches.
+
+- The genetic algorithm primarily flies directly towards the next checkpoint.
+  If the next checkpoint is behind a wall of spinners, it will simply fly towards that
+  wall of spinners and try to get as close to the checkpoint as it can that way.
+  That means you should define a checkpoint at every major turn so it knows where to go.
+
+
+--- Custom Hitboxes ---
+
+- Defined the same way as checkpoints.
+- A defined checkpoint is a killbox by default, based on the green hurtbox.
+- To define a collider (based on the red collision box) instead of a killbox, place 'c' after the definition.
+  Example: '218, -104, 234, -72 c'
+
+
+--- Supported Gameplay Mechanics ---
+
+- anything with a static spinner hitbox, spikes and lightning
+- Wind and wind triggers
+- Dodging or bouncing off walls. Block entities work but have to be defined manually.
+- Jumpthroughs
+- Correct physics with room bounds
+";
 
                 var file = File.Create(helpFile);
                 file.Write(Encoding.UTF8.GetBytes(text));

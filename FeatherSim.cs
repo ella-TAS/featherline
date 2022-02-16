@@ -33,7 +33,7 @@ namespace Featherline
 		private WindState wind;
 		private AngleSet ind;
 
-		private (float closestDist, int atFrame) fitEval = (9999999, 0);
+		private (double closestDist, int atFrame) fitEval = (9999999, 0);
 
 		private bool cleaningInputs;
 		private bool stop = false;
@@ -62,7 +62,13 @@ namespace Featherline
 			int cpExtras = si.checkpointsGotten * 10000;
 			if (si.checkpointsGotten >= Level.Checkpoints.Length) {
 				si.checkpointsGotten--;
-				double nextCpDist = si.GetDistToNextCp();
+				double nextCpDist = Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(si.pos, si.previousPos, out bool touched);
+
+				// prevents a small bug where the sim got the checkpoint according to intPos collision but not with final cp dist check,
+				// making the result 0 instead of 3 + 1/6 pixels that it should be
+				if (!touched)
+					nextCpDist = 3.16666d;
+
 				fitness = cpExtras - si.f * 8 - nextCpDist;
 				fCount = si.f + 1;
 			}
@@ -97,7 +103,7 @@ namespace Featherline
 
 		private void AnalyzeProgress() // return value -> whether simulation is finished
 		{
-			float dist = si.GetDistToNextCp();
+			var dist = si.GetDistToNextCp();
 			fitEval = dist < fitEval.closestDist ? (dist, si.f) : fitEval;
 
 			if (Level.Checkpoints[si.checkpointsGotten].TouchingAsFeather(si.intPos)) {
@@ -283,10 +289,10 @@ namespace Featherline
 			};
 		}
 
-		public float GetDistToNextCp() =>
+		public double GetDistToNextCp() =>
 			checkpointsGotten == Level.Checkpoints.Length - 1
-			? (float)Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos, previousPos)
-			: (float)Math.Sqrt(
+			? Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos, previousPos, out _)
+			: Math.Sqrt(
 				Math.Pow(Level.Checkpoints[checkpointsGotten].center.X - pos.X, 2)
 			  + Math.Pow(Level.Checkpoints[checkpointsGotten].center.Y - pos.Y, 2));
 

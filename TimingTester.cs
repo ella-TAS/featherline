@@ -90,8 +90,8 @@ namespace Featherline
         private void PrintResult()
         {
             WriteColor($"\nFinished with fitness {best.ind.fitness}\n", Yellow);
-            new FeatherSim(settings).SimulateIndivitual(best.inputs, true);
-            Console.WriteLine(GAManager.FrameGenesToString(best.inputs));
+            new FeatherSim(settings).SimulateIndivitual(best.inputs, true).Evaluate(out _, out int fCount);
+            Console.WriteLine(GAManager.FrameGenesToString(best.inputs, fCount));
         }
 
         private void WriteColor(string msg, ConsoleColor col)
@@ -118,8 +118,8 @@ namespace Featherline
 
             WriteColor($"\nBest fitness of this phase was {best.ind.fitness} with these inputs:\n", Yellow);
             var inputs = best.ind.ToFrameGenes(settings.Framecount, best.timings);
-            new FeatherSim(settings).SimulateIndivitual(inputs, true);
-            Console.WriteLine(GAManager.FrameGenesToString(inputs) + "\n");
+            new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
+            Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount) + "\n");
         }
 
         bool perfecting = false;
@@ -250,6 +250,7 @@ namespace Featherline
 
                 AnglePerfector.baseInfoFinishes = finishes;
                 AnglePerfector.baseInfoWallboops = wallboops;
+                AnglePerfector.baseInfoFitness = baseInfoSrc.ind.fitness;
                 previousBaseInfoSrc = baseInfoSrc;
             }
 
@@ -288,7 +289,7 @@ namespace Featherline
                     SourceFrameIndFitness, Math.Max(
                     best.ind.fitness,
                     backup?.ind.fitness ?? -99999d))) {
-                Console.WriteLine("\nTimings did badly. Attempting to fix it to get good results again.");
+                Console.WriteLine("\nBad timing result. Attempting to fix them.");
                 ga = new LineGenesGA(settings, timings,
                     FixInd(ga.inds[0], timings, secondHalf).angles);
             }
@@ -302,7 +303,7 @@ namespace Featherline
             return ga.inds[0];
         }
 
-        private LineInd FixInd(LineInd toFix, int[] timings, int gens)
+        public static LineInd FixInd(LineInd toFix, int[] timings, int gens)
         {
             int lines = timings.Length + 1;
             var avgGens = (float)gens / lines;
@@ -324,7 +325,7 @@ namespace Featherline
                 }
             Stop:
 
-            var ga = new LineGenesGA(settings, timings, toFix.angles);
+            var ga = new LineGenesGA(GAManager.settings, timings, toFix.angles);
             for (int t = 0; t < lines; t++)
                 for (int gen = 0; gen < lineGens[t]; gen++)
                     ga.DoGeneration(0, t);
@@ -449,6 +450,9 @@ namespace Featherline
             bool shuffleDir = true;
             WriteColor("\nBeginning shuffling process.\n", Blue);
 
+            backup = best.Clone();
+            RemoveUnnecessaryLinesUsingSim();
+
             for (int i = 0; i < settings.ShuffleCount; i++) {
                 double fitnessToBeat = Math.Max(best.ind.fitness, backup?.ind.fitness ?? 0);
                 testingTimingPrefix = $"(shuffle {i + 1} vs fitness {fitnessToBeat}) ";
@@ -465,7 +469,7 @@ namespace Featherline
         }
 
         bool[] shuffleImprovements;
-        bool previousShuffleFaster = true;
+        bool previousShuffleFaster = false;
         private void ShuffleTimings(bool positiveOnEvenIndex, int strength, double toBeat)
         {
             if (previousShuffleFaster) backup = best.Clone();
@@ -514,24 +518,24 @@ namespace Featherline
 
         #region Constructors
 
-        public TimingTester(Settings settings, FrameInd src)
+        public TimingTester(Settings settings, FrameInd ind)
         {
             this.settings = settings;
 
             WriteColor($"\nBest inputs of the first stage were:\n", Yellow);
-            var inputs = src.genes;
-            new FeatherSim(settings).SimulateIndivitual(inputs, true);
-            Console.WriteLine(GAManager.FrameGenesToString(inputs));
+            var inputs = ind.genes;
+            new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
+            Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount));
 
             SavedTiming.sett = settings;
 
             //Console.WriteLine("\n" + GAManager.FrameGenesToString(src.genes));
-            var simplified = SimplifyFrameGenes(src.genes);
+            var simplified = SimplifyFrameGenes(ind.genes);
             //Console.WriteLine("\n" + GAManager.FrameGenesToString(simplified));
 
             SetUpFirstIndividual(simplified);
 
-            SourceFrameIndFitness = src.fitness;
+            SourceFrameIndFitness = ind.fitness;
         }
 
         public TimingTester(Settings settings, string favorite)
@@ -586,7 +590,7 @@ namespace Featherline
 
                 if (Math.Abs(angDif[i]) > 5) {
                     int start = i;
-                    var ContinueTurning = angDif[i] < 5 ? (Func<bool>)(() => angDif[++i] < 5) : (() => angDif[++i] > 5);
+                    var ContinueTurning = angDif[i] < 5 ? (Func<bool>)(() => angDif[++i] < -5) : (() => angDif[++i] > 5);
                     while (i < angDif.Length - 1 && ContinueTurning()) { }
                     for (int j = start; j < i; j++)
                         src[j] = angles[i - 1];

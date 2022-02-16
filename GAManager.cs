@@ -178,8 +178,9 @@ namespace Featherline
             return res.ToAngleSet();
         }
 
-        public static string FrameGenesToString(AngleSet inputs)
+        public static string FrameGenesToString(AngleSet inputs, int fCount)
         {
+            inputs = inputs[..Math.Min(fCount, inputs.Length)];
             var sb = new StringBuilder();
 
             float lastAngle = inputs[0];

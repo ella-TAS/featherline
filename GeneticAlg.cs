@@ -139,7 +139,7 @@ namespace Featherline
             var res = (new FrameInd(parent1.genes[..index].Concat(parent2.genes[index..])),
                        new FrameInd(parent2.genes[..index].Concat(parent1.genes[index..])));
 
-            if (UseSavestates) {
+            if (UseSavestates && parent1.fStates.Length > 0 && parent2.fStates.Length > 0) {
                 res.Item1.parent = parent1;
                 res.Item2.parent = parent2;
                 res.Item1.SkippingState = parent1.fStates[Min(index - 1, parent1.fStates.Length - 1)];
@@ -203,10 +203,8 @@ namespace Featherline
 
         public void PrintFromFrameGenes(AngleSet genes)
         {
-            if (!sett.EnableSteepTurns)
-                new FeatherSim(settings).SimulateIndivitual(genes, true);
-
-            Console.WriteLine(GAManager.FrameGenesToString(genes));
+            new FeatherSim(settings).SimulateIndivitual(genes, !sett.EnableSteepTurns).Evaluate(out _, out int fCount);
+            Console.WriteLine(FrameGenesToString(genes, fCount));
         }
 
         public AngleSet GetBestIndividual() => inds[0].genes;

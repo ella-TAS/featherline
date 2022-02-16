@@ -75,7 +75,8 @@ namespace Featherline
 
         public T LineIndInfoAtFrame<T>(LineInd ind, int f, int[] timings, Func<bool, FeatherState, WindState, T> GetInfo)
         {
-            LoadSavestate(ind.SkippingState ?? Level.StartState);
+            var skipState = ind.SkippingState;
+            LoadSavestate(skipState is null || skipState.fState.f >= f ? Level.StartState : skipState);
 
             int nextTimingIndex = 0;
             int nextTiming = 0;

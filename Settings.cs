@@ -100,14 +100,6 @@ namespace Featherline
         public int Generations = 5000;
         public int SurvivorCount = 20;
 
-        //public float StartX;
-        //public float StartY;
-
-        //public bool DefineStartBoost;
-        //public float BoostX;
-        //public float BoostY;
-        //public float StartAngle;
-
         public float CrossoverProbability = 1;
         public float MutationProbability = 2;
         public float SimplificationProbability = 1;

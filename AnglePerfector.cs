@@ -23,6 +23,7 @@ namespace Featherline
         public static Savestate[] baseInfo;
         public static bool baseInfoFinishes;
         public static int[] baseInfoWallboops;
+        public static double baseInfoFitness;
 
         private int optimizingAt;
 
@@ -50,6 +51,13 @@ namespace Featherline
 
 
             for (int i = 0; i < 5; i++) {
+
+                new FeatherSim(settings)
+                        .SimulateIndivitual(current.ToFrameGenes(indLen, timings), false, indLen, current.SkippingState)
+                        .Evaluate(out current.fitness, out _);
+                if (current.fitness + 200d < baseInfoFitness)
+                    current = TimingTester.FixInd(current, timings, settings.GensPerTiming / 2);
+
                 var oldBorderExtras = current.borders.Clone(); 
 
                 farthestSurvival = startingAt - 1;

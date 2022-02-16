@@ -76,18 +76,19 @@ namespace Featherline
         }
         public Checkpoint() : base() { }
 
-        public double GetFinalCPDistance(Vector2 pos, Vector2 previousPos)
+        public double GetFinalCPDistance(Vector2 pos, Vector2 previousPos, out bool touched)
         {
             var rawL = bounds.Lf - pos.X;
             var rawR = pos.X - bounds.Rf;
             var rawU = bounds.Uf - pos.Y;
             var rawD = pos.Y - bounds.Df;
-
+            touched = false;
             if (rawL < 0 & rawR < 0 & rawU < 0 & rawD < 0) {
                 rawL = bounds.Lf - previousPos.X;
                 rawR = previousPos.X - bounds.Rf;
                 rawU = bounds.Uf - previousPos.Y;
                 rawD = previousPos.Y - bounds.Df;
+                touched = true;
             }
 
             double xDiff = rawL > 0 ? rawL : rawR > 0 ? rawR : 0;

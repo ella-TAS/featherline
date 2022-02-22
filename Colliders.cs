@@ -131,26 +131,27 @@ namespace Featherline
 
         public bool Booped(FeatherState fs)
         {
-            if (IsBeyond(fs.pos))
+            var exactPos = fs.ExactPosition;
+            if (IsBeyond(exactPos))
                 return false;
 
-            var oldPos = fs.pos - (fs.spd * FeatherSim.DeltaTime);
+            var oldPos = exactPos - (fs.spd * FeatherSim.DeltaTime);
             if (!IsBeyond(oldPos))
                 return false;
 
             bool booped = horizontal
-                ? bounds.Lf < fs.pos.X & fs.pos.X < bounds.Rf
+                ? bounds.Lf < exactPos.X & exactPos.X < bounds.Rf
                 : bounds.Uf < oldPos.Y & oldPos.Y < bounds.Df;
 
             if (booped) {
                 if (horizontal) {
                     fs.pos.Y = axisFix;
-                    fs.intPos.Y = axisFix;
+                    fs.moveCounter.Y = 0f;
                     fs.spd.Y /= -2;
                 }
                 else {
                     fs.pos.X = axisFix;
-                    fs.intPos.X = axisFix;
+                    fs.moveCounter.Y = 0f;
                     fs.spd.X /= -2;
                 }
             }

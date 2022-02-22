@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using static System.Math;
 
 namespace Featherline
@@ -32,7 +31,12 @@ namespace Featherline
             Y = (int)Round(src.Y);
         }
 
-        public float Dist(IntVec2 other) => (float)Sqrt(Pow(X-other.X, 2) + Pow(Y-other.Y, 2));
+        public float Dist(IntVec2 other)
+        {
+            var xDiff = X - other.X;
+            var yDiff = Y - other.Y;
+            return (float)Sqrt(xDiff * xDiff + yDiff * yDiff);
+        }
 
         public IntVec2() { }
 
@@ -76,7 +80,7 @@ namespace Featherline
         }
 
         // same as above but don't alter this vector
-        public Vector2 NormalizeAndCopy()
+        public Vector2 Normalized()
         {
             float num = 1f / (float)Sqrt(X * X + Y * Y);
             return new Vector2(X * num, Y * num);
@@ -96,9 +100,7 @@ namespace Featherline
         public static bool operator ==(Vector2 v1, Vector2 v2) => v1.X == v2.X && v1.Y == v2.Y;
         public static bool operator !=(Vector2 v1, Vector2 v2) => v1.X != v2.X || v1.Y != v2.Y;
 
-        public static Vector2 AngleToVector(float angleRadians, float length) =>
-            new Vector2((float)Cos(angleRadians) * length,
-                (float)Sin(angleRadians) * length);
+        public static Vector2 operator +(IntVec2 v1, Vector2 v2) => new Vector2(v1.X + v2.X, v1.Y + v2.Y);
 
         public static float Dot(Vector2 v1, Vector2 v2) => v1.X * v2.X + v1.Y * v2.Y;
 
@@ -129,5 +131,14 @@ namespace Featherline
         Up = 1,
         Right = 2,
         Down = 3
+    }
+
+    public enum AlgPhase
+    {
+        None = 0,
+        FrameGenes = 1,
+        TimingTesterLight = 2,
+        TimingTesterHeavy = 3,
+        AnglePerfector = 4
     }
 }

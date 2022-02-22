@@ -34,9 +34,9 @@ namespace Featherline
 
         private bool CheckDangerMap()
         {
-            if (si.intPos.X < DeathMap.xMin || si.intPos.X > DeathMap.xMax || si.intPos.Y < DeathMap.yMin || si.intPos.Y > DeathMap.yMax)
+            if (si.pos.X < DeathMap.xMin || si.pos.X > DeathMap.xMax || si.pos.Y < DeathMap.yMin || si.pos.Y > DeathMap.yMax)
                 return false;
-            return DeathMap.map[(si.intPos.X - DeathMap.xMin) / 8][(si.intPos.Y - DeathMap.yMin) / 8];
+            return DeathMap.map[(si.pos.X - DeathMap.xMin) / 8][(si.pos.Y - DeathMap.yMin) / 8];
         }
 
         private void DistFilterHazards()
@@ -45,8 +45,8 @@ namespace Featherline
                 var dummyPos = new IntVec2(si.pos + (wind.current * 5 * DeltaTime));
 
                 distFiltSpinners = Spinners.Where(spn => Math.Pow(spn.X - dummyPos.X, 2) + Math.Pow(spn.Y - dummyPos.Y, 2) < 900).ToArray();
-                distFiltKBs = Killboxes.Where(kbx => kbx.GetActualDistance(si.intPos) < 30).ToArray();
-                distFiltSpikes = Spikes.Where(spk => spk.GetActualDistance(si.intPos) < 30).ToArray();
+                distFiltKBs = Killboxes.Where(kbx => kbx.GetActualDistance(si.pos) < 30).ToArray();
+                distFiltSpikes = Spikes.Where(spk => spk.GetActualDistance(si.pos) < 30).ToArray();
 
                 framesSinceDistFilter = 0;
             }
@@ -54,20 +54,23 @@ namespace Featherline
 
         private bool RawHazardCollision()
         {
-            foreach (var s in distFiltSpinners)
-                if (Math.Pow(si.intPos.X - s.X, 2) + Math.Pow(si.intPos.Y - 4 - s.Y, 2) < 150d
-                && ((s.X - 7 < si.intPos.X && si.intPos.X < s.X + 7 && s.Y - 3 < si.intPos.Y && si.intPos.Y < s.Y + 15) || // slightly tall
-                    (s.X - 8 < si.intPos.X && si.intPos.X < s.X + 8 && s.Y - 2 < si.intPos.Y && si.intPos.Y < s.Y + 14) || // square
-                    (s.X - 9 < si.intPos.X && si.intPos.X < s.X + 9 && s.Y - 1 < si.intPos.Y && si.intPos.Y < s.Y + 13) || // slightly squished
-                    (s.X - 11 < si.intPos.X && si.intPos.X < s.X + 11 && s.Y < si.intPos.Y && si.intPos.Y < s.Y + 10))) // sideways bar
+            foreach (var s in distFiltSpinners) {
+                var xDiff = si.pos.X - s.X;
+                var yDiff = si.pos.Y - 5 - s.Y;
+                if (xDiff * xDiff + yDiff * yDiff < 170d
+                && ((s.X - 7 < si.pos.X && si.pos.X < s.X + 7 && s.Y - 3 < si.pos.Y && si.pos.Y < s.Y + 15) || // slightly tall
+                    (s.X - 8 < si.pos.X && si.pos.X < s.X + 8 && s.Y - 2 < si.pos.Y && si.pos.Y < s.Y + 14) || // square
+                    (s.X - 9 < si.pos.X && si.pos.X < s.X + 9 && s.Y - 1 < si.pos.Y && si.pos.Y < s.Y + 13) || // slightly squished
+                    (s.X - 11 < si.pos.X && si.pos.X < s.X + 11 && s.Y < si.pos.Y && si.pos.Y < s.Y + 10))) // sideways bar
                     return true;
+            }
 
             for (int i = 0; i < distFiltKBs.Length; i++)
-                if (distFiltKBs[i].TouchingAsFeather(si.intPos))
+                if (distFiltKBs[i].TouchingAsFeather(si.pos))
                     return true;
 
             for (int i = 0; i < distFiltSpikes.Length; i++)
-                if (distFiltSpikes[i].Died(si.intPos, si.spd))
+                if (distFiltSpikes[i].Died(si.pos, si.spd))
                     return true;
 
             return false;
@@ -94,8 +97,9 @@ namespace Featherline
             }
 
             foreach (var JT in distFiltNormalJTs)
-                if (JT.Pulling(si.intPos, si.spd)) {
-                    si.pos.Y -= 40 * DeltaTime;
+                if (JT.Pulling(si.pos, si.spd)) {
+                    si.moveCounter.Y -= 40 * DeltaTime;
+                    si.MoveV();
                     break;
                 }
 
@@ -105,9 +109,10 @@ namespace Featherline
             YMove();
 
             foreach (var JT in distFiltCustomJTs) {
-                if (JT.Pulling(si.intPos, si.spd)) {
-                    si.pos += JT.pullVector;
-                    si.UpdateIntPos();
+                if (JT.Pulling(si.pos, si.spd)) {
+                    si.moveCounter += JT.pullVector;
+                    si.MoveH();
+                    si.MoveV();
                     continue;
                 }
                 if (JT.Booped(si)) {
@@ -122,15 +127,12 @@ namespace Featherline
 
             void XMove()
             {
-                //if (si.f == 108) {
-                //}
-
-                si.pos.X += si.spd.X * DeltaTime;
-                si.intPos.X = (int)Math.Round(si.pos.X);
+                si.moveCounter.X += si.spd.X * DeltaTime;
+                si.MoveH();
 
                 // custom colliders (take priority over room border)
                 for (int i = 0; i < distFiltColls.Length; i++) {
-                    if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                    if (distFiltColls[i].TouchingAsFeather(si.pos)) {
                         stop = sett.AvoidWalls;
                         wallboops.Add(si.f);
                         BounceX(si.spd.X > 0
@@ -141,16 +143,16 @@ namespace Featherline
                 }
 
                 // room border behavior
-                if (si.intPos.X - 3 <= Tiles.x) {
-                    si.pos.X += Tiles.x + 4 - si.intPos.X;
-                    si.intPos.X = Tiles.x + 4;
+                if (si.pos.X - 3 <= Tiles.x) {
+                    si.pos.X += Tiles.x + 4 - si.pos.X;
+                    si.pos.X = Tiles.x + 4;
                     si.spd.X = 0f;
                     UpdateLR();
                     return;
                 }
-                else if (si.intPos.X + 4 > Tiles.rightBound) {
-                    si.pos.X += Tiles.rightBound - 4 - si.intPos.X;
-                    si.intPos.X = Tiles.rightBound - 4;
+                else if (si.pos.X + 4 > Tiles.rightBound) {
+                    si.pos.X += Tiles.rightBound - 4 - si.pos.X;
+                    si.pos.X = Tiles.rightBound - 4;
                     si.spd.X = 0f;
                     UpdateLR();
                     return;
@@ -163,17 +165,17 @@ namespace Featherline
                 if (Tiles.map[U][x] | Tiles.map[D][x]) {
                     stop = sett.AvoidWalls;
                     wallboops.Add(si.f);
-                    BounceX((si.intPos.X + (si.spd.X > 0 ? -4 : 3) - Tiles.x) / 8 * 8 + 4 + Tiles.x);
+                    BounceX((si.pos.X + (si.spd.X > 0 ? -4 : 3) - Tiles.x) / 8 * 8 + 4 + Tiles.x);
                 }
             }
 
             void YMove()
             {
-                si.pos.Y += si.spd.Y * DeltaTime;
-                si.intPos.Y = (int)Math.Round(si.pos.Y);
+                si.moveCounter.Y += si.spd.Y * DeltaTime;
+                si.MoveV();
 
                 for (int i = 0; i < distFiltColls.Length; i++) {
-                    if (distFiltColls[i].TouchingAsFeather(si.intPos)) {
+                    if (distFiltColls[i].TouchingAsFeather(si.pos)) {
                         stop = sett.AvoidWalls;
                         wallboops.Add(si.f);
                         BounceY(si.spd.Y > 0
@@ -189,33 +191,33 @@ namespace Featherline
                 if (Tiles.map[y][L] | Tiles.map[y][R]) {
                     stop = sett.AvoidWalls;
                     wallboops.Add(si.f);
-                    BounceY((si.intPos.Y + (si.spd.Y > 0 ? -2 : 4) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
+                    BounceY((si.pos.Y + (si.spd.Y > 0 ? -2 : 4) - Tiles.y) / 8 * 8 + 2 + Tiles.y);
                 }
             }
 
             void UpdateLR()
             {
-                L = (si.intPos.X - 4 - Tiles.x) / 8;
-                R = (si.intPos.X + 3 - Tiles.x) / 8;
+                L = (si.pos.X - 4 - Tiles.x) / 8;
+                R = (si.pos.X + 3 - Tiles.x) / 8;
             }
             void UpdateUD()
             {
-                U = (si.intPos.Y - 10 - Tiles.y) / 8;
-                D = (si.intPos.Y - 3 - Tiles.y) / 8;
+                U = (si.pos.Y - 10 - Tiles.y) / 8;
+                D = (si.pos.Y - 3 - Tiles.y) / 8;
                 U = U > 0 ? U < Tiles.lowestYIndex ? U : Tiles.lowestYIndex : 0;
                 D = D > 0 ? D < Tiles.lowestYIndex ? D : Tiles.lowestYIndex : 0;
             }
             void BounceX(int newX)
             {
                 si.pos.X = newX;
-                si.intPos.X = newX;
+                si.moveCounter.X = 0f;
                 si.spd.X *= -0.5f;
                 UpdateLR();
             }
             void BounceY(int newY)
             {
                 si.pos.Y = newY;
-                si.intPos.Y = newY;
+                si.moveCounter.Y = 0f;
                 si.spd.Y *= -0.5f;
             }
         }

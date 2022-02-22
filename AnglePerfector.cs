@@ -84,8 +84,7 @@ namespace Featherline
 
             End:
 
-            Console.WriteLine(count + " border variations tested.");
-            Console.WriteLine("fitness " + best.fitness);
+            Console.WriteLine("fitness " + best.fitness.FitnessFormat());
             return best;
         }
 
@@ -402,7 +401,7 @@ namespace Featherline
                 bool stop; int cps; List<int> wallboops;
                 var sim = new FeatherSim(settings);
                 (stop, cps, endPos, wallboops) = sim.LineIndInfoAtFrame(ind, stateCheckFrame, timings,
-                    (stop, fs, ws) => (stop, fs.checkpointsGotten, fs.pos, sim.wallboops));
+                    (stop, fs, ws) => (stop, fs.checkpointsGotten, fs.ExactPosition, sim.wallboops));
 
                 if (cps >= Level.Checkpoints.Length) return false;
                 if (stop) return true;

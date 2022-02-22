@@ -9,8 +9,8 @@ namespace Featherline
     {
         public Settings sett;
 
-        private float crossoverProb;
-        private float mutationProb;
+        private const float crossoverProb = 0.2f;
+        private const float mutationProb = 0.8f;
         private float mutationMagnitude;
 
         public FrameInd[] inds;
@@ -175,13 +175,6 @@ namespace Featherline
         public FrameGenesGA(Settings s, int upToFrame)
         {
             sett = s;
-
-            crossoverProb = sett.SurvivorCount <= 1 ? 0 : sett.CrossoverProbability / 2;
-            mutationProb = sett.MutationProbability;
-            float probSum = crossoverProb + mutationProb + sett.SimplificationProbability;
-            crossoverProb /= probSum;
-            mutationProb = mutationProb / probSum + crossoverProb;
-
             mutationMagnitude = sett.MutationMagnitude;
 
             favorite = ParseFavorite(s.Favorite, s.Framecount);
@@ -199,13 +192,6 @@ namespace Featherline
         }
 
         public double GetBestFitness() => inds[0].fitness;
-        public void PrintBestIndividual() => PrintFromFrameGenes(inds[0].genes);
-
-        public void PrintFromFrameGenes(AngleSet genes)
-        {
-            new FeatherSim(settings).SimulateIndivitual(genes, !sett.EnableSteepTurns).Evaluate(out _, out int fCount);
-            Console.WriteLine(FrameGenesToString(genes, fCount));
-        }
 
         public AngleSet GetBestIndividual() => inds[0].genes;
     }
@@ -213,7 +199,7 @@ namespace Featherline
     public class FrameInd
     {
         public AngleSet genes;
-        public double fitness = -999999;
+        public double fitness = -999999d;
 
         private Savestate skippingState = null;
         public Savestate SkippingState
@@ -237,7 +223,7 @@ namespace Featherline
         public int indLength;
         public int[] timings;
 
-        private float crossoverProb;
+        private const float crossoverProb = 0.2f;
 
         private int earliestMutateableAngle;
         private int lastMutateableAngle;
@@ -250,8 +236,6 @@ namespace Featherline
 
             GenerateNewChildren();
 
-            //for (int i = sett.SurvivorCount; i < inds.Length; i++)
-                //DoSim(i);
             MyParallel.Run(sett.SurvivorCount, inds.Length, DoSim);
 
             inds = inds.OrderByDescending(ind => ind.fitness).ToArray();
@@ -262,7 +246,7 @@ namespace Featherline
             {
                 var sim = new FeatherSim(sett);
                 sim.SimulateIndivitual(inds[i].ToFrameGenes(indLength, timings), false, runToFrame, inds[i].SkippingState);
-                sim.Evaluate(out double fitness, out _);
+                sim.Evaluate(out var fitness, out _);
                 inds[i].fitness = fitness;
             }
         }
@@ -391,9 +375,6 @@ namespace Featherline
         {
             sett = s;
 
-            crossoverProb = sett.SurvivorCount <= 1 ? 0 : sett.CrossoverProbability;
-            crossoverProb /= (crossoverProb + sett.MutationProbability) * 2;
-
             this.timings = timings;
             indLength = s.Framecount;
 
@@ -416,7 +397,7 @@ namespace Featherline
         public AngleSet borders;
         public AngleSet angles;
 
-        public double fitness = -9999999999;
+        public double fitness = -999999d;
 
         private Savestate skippingState = null;
         public Savestate SkippingState {
@@ -432,7 +413,7 @@ namespace Featherline
             var res = new AngleSet(duration);
             int line = 0;
 
-            res.SetRange(angles[0], 0, timings.Length == 0 ? duration : timings[0]);
+            res.SetRange(angles[0], 0, timings.Length == 0 ? duration : Min(timings[0], duration));
             for (int i = 0; i < timings.Length; i++)
                 res.SetRange(angles[line + 1], timings[i], i == timings.Length - 1 ? duration : timings[i + 1]);
 

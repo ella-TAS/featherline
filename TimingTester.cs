@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using static System.ConsoleColor;
+using System.Windows.Forms;
 
 namespace Featherline
 {
@@ -18,15 +19,16 @@ namespace Featherline
 
         private double SourceFrameIndFitness;
 
+        private int mostRecentImprovement = -1;
+
         public void Run()
         {
-            WriteColor("\nStarting up timing tester.\n", Yellow);
+            WriteColor("\nStarting up timing tester.\n\n", Yellow);
 
             if (best.timings.Length == 0) {
                 if (settings.TimingTestFavDirectly)
                 {
                     best.ind.fitness = 69420.12345;
-                    PrintResult();
                     Console.WriteLine("why are you using timing tester with zero timings lol");
                     return;
                 }
@@ -36,76 +38,90 @@ namespace Featherline
             }
 
             if (!settings.TimingTestFavDirectly) {
+                GAManager.lastPhase = AlgPhase.TimingTesterLight;
                 var firstTiming = UseAlgOnTiming(best.timings, best.ind.angles, settings.GensPerTiming);
                 best = new SavedTiming(firstTiming, best.timings);
                 Console.WriteLine("\n");
+                AddCandidate(AlgPhase.TimingTesterLight);
+                if (GAManager.abortAlgorithm) return;
 
                 CleanupAndReset(); // light cleanup
                 if (best.timings.Length == 0) { EndDueToZeroTimings(); return; }
 
                 TestUntilNoImprovement(settings.GensPerTiming / 4, false, 1); // phase 1 general testing
+                AddCandidate(AlgPhase.TimingTesterLight);
 
-                WriteColor("Increasing generation count per timing.\n", Yellow);
+                WriteColor("Increasing generation count per timing.\n\n", Yellow);
 
-                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming);
+                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming, -1);
+                AddCandidate(AlgPhase.TimingTesterHeavy);
+                if (GAManager.abortAlgorithm) return;
 
-                CleanupAndReset();
-                WriteColor($"Light input cleanup. Down to {best.ind.angles.Length} lines of input.\n", Yellow); // light cleanup
+                //CleanupAndReset();
+                RemoveUnnecessaryLinesUsingSim();
+                WriteColor($"Light input cleanup. Down to {best.ind.angles.Length} lines of input.\n\n", Yellow); // light cleanup
                 if (best.timings.Length == 0) { EndDueToZeroTimings(); return; }
 
+                GAManager.lastPhase = AlgPhase.TimingTesterHeavy;
                 TestUntilNoImprovement(settings.GensPerTiming, true, 2); // phase 2 intermediate testing
+                AddCandidate(AlgPhase.TimingTesterHeavy);
+                if (GAManager.abortAlgorithm) return;
+                Level.PermanentDistFilter(best.inputs);
 
-                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming);
+                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming, -1);
 
                 RemoveUnnecessaryLinesUsingSim();
-                WriteColor($"Strict logical input cleanup. Down to {best.ind.angles.Length} lines of input.\n", Yellow); // strict cleanup
+                WriteColor($"Strict logical input cleanup. Down to {best.ind.angles.Length} lines of input.\n\n", Yellow); // strict cleanup
                 if (best.timings.Length == 0) { EndDueToZeroTimings(); return; }
 
-                WriteColor("Approximately optimizing cleaned inputs.\n", Yellow);
+                WriteColor("Optimizing cleaned inputs.\n\n", Yellow);
                 TestUntilNoImprovement(settings.GensPerTiming, false, 0); // phase 3 more intermediate testing
+                AddCandidate(AlgPhase.TimingTesterHeavy);
+                if (GAManager.abortAlgorithm) return;
 
-                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming);
+                TestTiming(best.timings, best.ind.angles, settings.GensPerTiming, -1);
 
                 RemoveUnnecessaryLinesUsingSim();
-                WriteColor($"Final input cleanup. Down to {best.ind.angles.Length} lines of input.\n", Yellow); // last strict cleanup
+                WriteColor($"Final input cleanup. Down to {best.ind.angles.Length} lines of input.\n\n", Yellow); // last strict cleanup
                 if (best.timings.Length == 0) { EndDueToZeroTimings(); return; }
                 best.ind = FixInd(best.ind, best.timings, settings.GensPerTiming * 3);
             }
 
             perfecting = true;
-            best.ind.fitness = -99999;
+            best.ind.fitness = -99999d;
             current = best.Clone();
+            GAManager.lastPhase = AlgPhase.AnglePerfector;
 
             TestPerfectTiming(best.timings, precision, 0);
-            TestUntilNoImprovement(0, false, 0);
+            TestUntilNoImprovement(0, true, 0);
+            AddCandidate(AlgPhase.AnglePerfector);
+
+            Level.PermanentDistFilter(best.inputs);
 
             if (settings.ShuffleCount > 0)
                 ShufflingProcess();
-
-            PrintResult();
         }
 
         #region Feedback
 
-        private void PrintResult()
-        {
-            WriteColor($"\nFinished with fitness {best.ind.fitness}\n", Yellow);
-            new FeatherSim(settings).SimulateIndivitual(best.inputs, true).Evaluate(out _, out int fCount);
-            Console.WriteLine(GAManager.FrameGenesToString(best.inputs, fCount));
-        }
-
         private void WriteColor(string msg, ConsoleColor col)
         {
             Console.ForegroundColor = col;
-            Console.WriteLine(msg);
+            Console.Write(msg);
             Console.ForegroundColor = White;
         }
 
-        private void EndDueToZeroTimings()
+        private void EndDueToZeroTimings() => Console.WriteLine("oh god 0 timings this wont do");
+
+        private void PrintTimings(int[] timings, int currentIndex)
         {
-            Console.WriteLine("oh god 0 timings this wont do");
-            PrintResult();
+            for (int i = 0; i < timings.Length; i++) {
+                var color = i == currentIndex ? Blue : i == mostRecentImprovement ? Green : Gray;
+                WriteColor(" " + timings[i].ToString(), color);
+            }
         }
+
+        private void AddCandidate(AlgPhase src) => GAManager.finalResultCandidates.Add((best.ind.ToFrameGenes(settings.Framecount, best.timings), best.ind.fitness, src));
 
         #endregion
 
@@ -113,10 +129,11 @@ namespace Featherline
 
         private void TestUntilNoImprovement(int gensPerTest, bool backtrackOnImprovement, int maxImprCountWhereBreak)
         {
+            mostRecentImprovement = -1;
             testedSinceImprovement = new List<SingleTiming>();
             while (TestEveryTimingChange(gensPerTest, backtrackOnImprovement) > maxImprCountWhereBreak) { }
 
-            WriteColor($"\nBest fitness of this phase was {best.ind.fitness} with these inputs:\n", Yellow);
+            WriteColor($"\nBest fitness of this phase was {best.ind.fitness.FitnessFormat()} with these inputs:\n\n", Yellow);
             var inputs = best.ind.ToFrameGenes(settings.Framecount, best.timings);
             new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
             Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount) + "\n");
@@ -137,13 +154,14 @@ namespace Featherline
             for (int i = 0; i < Math.Min(best.timings.Length, Stop()); i++) {
                 current = best.Clone();
 
-
                 TimingChange change;
 
+                // predicted improvements
                 if (perfecting) {
                     while (true) {
                         bool noImprovement = true;
                         for (int j = 0; j < Math.Min(best.timings.Length, Stop()); j++) {
+                            if (GAManager.abortAlgorithm) return 0;
                             if (current.ind.borders[j] <= 0) {
                                 change = new TimingChange(j, 1);
                                 if (change.ApplyTo(current.timings, testedSinceImprovement)) {
@@ -151,12 +169,16 @@ namespace Featherline
                                     Console.WriteLine("predicted improvement " + change);
                                     current.ind.borders[j] = AnglePerfector.MaxFrameSteer;
                                     if (TestPerfectTiming(current.timings, precision, j)) {
+                                        mostRecentImprovement = j;
                                         testedSinceImprovement.Clear();
                                         noImprovement = false;
                                         current = best.Clone();
                                         break;
                                     }
-                                    else current.ind.borders[j] = 0f;
+                                    else {
+                                        change.TakeBack();
+                                        current.ind.borders[j] = 0f;
+                                    }
                                 }
                             }
                             else if (current.ind.borders[j] >= AnglePerfector.MaxFrameSteer) {
@@ -166,23 +188,30 @@ namespace Featherline
                                     Console.WriteLine("predicted improvement " + change);
                                     current.ind.borders[j] = 0f;
                                     if (TestPerfectTiming(current.timings, precision, j)) {
+                                        mostRecentImprovement = j;
                                         testedSinceImprovement.Clear();
                                         noImprovement = false;
                                         current = best.Clone();
                                         break;
                                     }
-                                    else current.ind.borders[j] = AnglePerfector.MaxFrameSteer;
+                                    else {
+                                        change.TakeBack();
+                                        current.ind.borders[j] = AnglePerfector.MaxFrameSteer;
+                                    }
                                 }
                             }
                         }
                         if (noImprovement) break;
                     }
                 }
+                if (GAManager.abortAlgorithm) return 0;
 
+                // regular timing testing
                 change = new TimingChange(i, -1);
                 if (change.ApplyTo(current.timings, testedSinceImprovement)) {
                     testedSinceImprovement.Add(new SingleTiming(i, current.timings[i]));
                     if (ThisTimingChange(i)) {
+                        mostRecentImprovement = i;
                         improvementCount++;
 
                         if (backtrackOnImprovement)
@@ -194,10 +223,12 @@ namespace Featherline
                     }
                     else change.TakeBack();
                 }
+                if (GAManager.abortAlgorithm) return 0;
 
                 if (change.ApplyInverse(testedSinceImprovement)) {
                     testedSinceImprovement.Add(new SingleTiming(i, current.timings[i]));
                     if (ThisTimingChange(i)) {
+                        mostRecentImprovement = i;
                         improvementCount++;
 
                         if (backtrackOnImprovement)
@@ -213,26 +244,28 @@ namespace Featherline
 
             return improvementCount;
 
-            bool ThisTimingChangeRandom(int i) => TestTiming(current.timings, current.ind.angles, gensPerTest);
+            bool ThisTimingChangeRandom(int i) => TestTiming(current.timings, current.ind.angles, gensPerTest, i);
             bool ThisTimingChangePerfect(int i) => TestPerfectTiming(current.timings, precision, i);
         }
 
         // returns whether the tested timing was faster
-        private bool TestTiming(int[] turnPoints, AngleSet angles, int generations)
+        private bool TestTiming(int[] timings, AngleSet angles, int generations, int changedAt)
         {
-            Console.WriteLine(testingTimingPrefix + "Testing Timing: " + string.Join(", ", turnPoints.Select(tp => tp.ToString()).ToArray()));
+            Console.Write(testingTimingPrefix + "Testing Timings:");
+            PrintTimings(timings, changedAt);
+            Console.WriteLine();
 
-            var algResult = UseAlgOnTiming(turnPoints, angles, generations);
+            var algResult = UseAlgOnTiming(timings, angles, generations);
 
             if (algResult.fitness > best.ind.fitness) {
-                WriteColor("\nTiming was faster. Setting it as new best.\n", Green);
+                WriteColor("\nTiming was faster. Setting it as new best.\n\n", Green);
 
                 best = new SavedTiming(algResult, current.timings);
 
                 return true;
             }
 
-            WriteColor("\nTiming was slower.\n", Red);
+            WriteColor("\nTiming was slower.\n\n", Red);
 
             return false;
         }
@@ -240,7 +273,9 @@ namespace Featherline
         private SavedTiming previousBaseInfoSrc;
         private bool TestPerfectTiming(int[] turnPoints, float precision, int changedAt)
         {
-            Console.WriteLine(testingTimingPrefix + "Testing Timing: " + string.Join(", ", turnPoints.Select(tp => tp.ToString()).ToArray()));
+            Console.Write(testingTimingPrefix + "Testing Timings:");
+            PrintTimings(turnPoints, changedAt);
+            Console.WriteLine();
 
             var baseInfoSrc = backup != null && backup.ind.fitness > best.ind.fitness ? backup : best;
             if (baseInfoSrc != previousBaseInfoSrc) {
@@ -257,7 +292,7 @@ namespace Featherline
             var algResult = new AnglePerfector(current, precision, changedAt, settings).Run();
 
             if (algResult.fitness > best.ind.fitness && !current.timings.SequenceEqual(best.timings)) {
-                WriteColor("\nTiming was faster. Setting it as new best.\n", Green);
+                WriteColor("\nTiming was faster. Setting it as new best.\n\n", Green);
 
                 //previousBestTimings = best.timings;
                 best = new SavedTiming(algResult, current.timings);
@@ -265,7 +300,7 @@ namespace Featherline
                 return true;
             }
 
-            WriteColor("\nTiming was slower.\n", Red);
+            WriteColor("\nTiming was slower.\n\n", Red);
 
             return false;
         }
@@ -280,8 +315,9 @@ namespace Featherline
             int secondHalf = generations - firstHalf;
 
             for (int i = 0; i < firstHalf; i++) {
+                if (GAManager.abortAlgorithm) return ga.inds[0];
                 ga.DoGeneration();
-                Console.Write($"\r{gen}/{generations} generations done. Best fitness: {ga.inds[0].fitness}                ");
+                GAManager.GenerationFeedback(gen, generations, ga.inds[0].fitness);
                 gen++;
             }
 
@@ -295,8 +331,9 @@ namespace Featherline
             }
 
             for (int i = 0; i < secondHalf; i++) {
+                if (GAManager.abortAlgorithm) return ga.inds[0];
                 ga.DoGeneration();
-                Console.Write($"\r{gen}/{generations} generations done. Best fitness: {ga.inds[0].fitness}                ");
+                GAManager.GenerationFeedback(gen, generations, ga.inds[0].fitness);
                 gen++;
             }
 
@@ -327,8 +364,10 @@ namespace Featherline
 
             var ga = new LineGenesGA(GAManager.settings, timings, toFix.angles);
             for (int t = 0; t < lines; t++)
-                for (int gen = 0; gen < lineGens[t]; gen++)
+                for (int gen = 0; gen < lineGens[t]; gen++) {
+                    if (GAManager.abortAlgorithm) return ga.inds[0];
                     ga.DoGeneration(0, t);
+                }
 
             return ga.inds[0];
         }
@@ -448,18 +487,19 @@ namespace Featherline
         private void ShufflingProcess()
         {
             bool shuffleDir = true;
-            WriteColor("\nBeginning shuffling process.\n", Blue);
+            WriteColor("\nBeginning shuffling process.\n\n", Blue);
 
             backup = best.Clone();
             RemoveUnnecessaryLinesUsingSim();
 
             for (int i = 0; i < settings.ShuffleCount; i++) {
-                double fitnessToBeat = Math.Max(best.ind.fitness, backup?.ind.fitness ?? 0);
-                testingTimingPrefix = $"(shuffle {i + 1} vs fitness {fitnessToBeat}) ";
+                double fitnessToBeat = Math.Max(best.ind.fitness, backup?.ind.fitness ?? -99999d);
+                testingTimingPrefix = $"(shuffle {i + 1} vs fitness {fitnessToBeat.FitnessFormat()}) ";
 
                 int strength = 3 - (int)Math.Floor(i / (float)Math.Max(6, settings.ShuffleCount) * 3);
 
                 ShuffleTimings(shuffleDir, strength, fitnessToBeat);
+                if (GAManager.abortAlgorithm) break;
 
                 shuffleDir = !shuffleDir;
             }
@@ -486,18 +526,19 @@ namespace Featherline
             best.ind.borders = new AngleSet(best.ind.borders.Length);
 
             //TestTiming(best.timings, best.ind.angles, settings.GensPerTiming);
-            TestUntilNoImprovement(settings.GensPerTiming, false, 0);
+            TestUntilNoImprovement(settings.GensPerTiming, true, 0);
             //TestTiming(best.timings, best.ind.angles, 0);
 
             GetShuffleImprovements(positiveOnEvenIndex);
 
             if (best.ind.fitness >= toBeat) {
-                WriteColor("\nShuffle result was faster.\n\n", Green);
+                WriteColor("\nShuffle result was faster.\n\n\n", Green);
+                AddCandidate(AlgPhase.AnglePerfector);
                 previousShuffleFaster = true;
                 return;
             }
 
-            WriteColor("\nShuffle result was slower.\n\n", Red);
+            WriteColor("\nShuffle result was slower.\n\n\n", Red);
             previousShuffleFaster = false;
         }
 
@@ -522,7 +563,7 @@ namespace Featherline
         {
             this.settings = settings;
 
-            WriteColor($"\nBest inputs of the first stage were:\n", Yellow);
+            WriteColor($"\nBest inputs of the first phase were:\n\n", Yellow);
             var inputs = ind.genes;
             new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
             Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount));
@@ -543,6 +584,7 @@ namespace Featherline
             this.settings = settings;
 
             var inputs = GAManager.RawFavorite(favorite);
+            settings.Framecount = Math.Max(inputs.Length, settings.Framecount);
             
             new FeatherSim(settings).SimulateIndivitual(inputs)
                 .Evaluate(out SourceFrameIndFitness, out _);

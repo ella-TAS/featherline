@@ -9,10 +9,10 @@
             if (doWind) {
                 // check wind triggers and update target wind speed
                 foreach (var WT in Level.WindTriggers) {
-                    if (si.intPos.X >= WT.bounds.L &&
-                        si.intPos.X <= WT.bounds.R &&
-                        si.intPos.Y >= WT.bounds.U &&
-                        si.intPos.Y <= WT.bounds.D) {
+                    if (si.pos.X >= WT.bounds.L &&
+                        si.pos.X <= WT.bounds.R &&
+                        si.pos.Y >= WT.bounds.U &&
+                        si.pos.Y <= WT.bounds.D) {
 
                         if (WT.vertWind) {
                             wind.target.Y = WT.strength;
@@ -29,8 +29,9 @@
 
                 wind.UpdateWindSpeed();
 
-                si.pos += wind.current * DeltaTime;
-                si.UpdateIntPos();
+                si.moveCounter += wind.current * DeltaTime;
+                si.MoveH();
+                si.MoveV();
             }
         }
     }

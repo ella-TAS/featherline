@@ -1,30 +1,28 @@
 ﻿
 To get started with Featherline, follow these steps:
 
-1: Click on Copy -> Info Template to copy the custom info template to your clipboard.
-Then Right click on the info panel of celeste studio and click "Set Custom Info Template From Clipboard".
-Also, entity watch would likely break it if you have it on.
+1:  Click on Copy -> Info Template to copy the custom info template to your clipboard.
+	Then Right click on the info panel of celeste studio and click 'Set Custom Info Template From Clipboard'.
 
-2: Click on Copy -> Setup TAS Snippet to copy the info file creation script to your clipboard,
-then paste it to your TAS. Then make sure you make the first frame of feather movement is in between the commands.
-As an example:
+2:  Click on Copy -> Info Logging Snippet to copy the info file creation script to your clipboard,
+	then paste it to your TAS. Then make sure that the last frame before the simulated inputs is in between the commands.
+	Example:
 
-  13,R,U,X
-  26
-StartExportGameInfo infodump.txt
-   1,R,U
-FinishExportGameInfo
+	  13,R,U,X
+	  26
+	StartExportGameInfo infodump.txt
+	   1,R,U
+	FinishExportGameInfo
 
-Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.
-This same method works even if the start frame is in an already going feather.
+	Then run the TAS over those commands to create/update infodump.txt in your Celeste folder.
+	This same method works even if the start frame is in an already going feather.
 
-3: Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
+3:  Click on the Select Information Source File button and select the infodump.txt file in your celeste folder.
 
-4: Either define a checkpoint at every major turn or branching path of the part you want to TAS,
-or give the program initial inputs to work with then define one checkpoint as the ending.
-Checkpoints are further explained later in this file.
+4:  Define a checkpoint at every turn or branching point of the path you want to TAS.
+	Checkpoints are further explained later in this file.
 
-5: Click the Run Algorithm button.
+5:  Click the Run Algorithm button.
 
 
 --- Checkpoints ---
@@ -43,16 +41,22 @@ Checkpoints are further explained later in this file.
 
 --- Custom Hitboxes ---
 
-- Defined the same way as checkpoints.
+- Defined the same way as checkpoints in the text box on the right.
 - A defined checkpoint is a killbox by default, based on the green hurtbox.
-- To define a collider (based on the red collision box) instead of a killbox, place "c" after the definition.
-  Example: "218, -104, 234, -72 c"
+- To define a collider (based on the red collision box) instead of a killbox, place 'c' after the definition.
+  Example: '218, -104, 234, -72 c'
+- Fully static tile entities will automatically be added as colliders behind the scenes,
+  but kevins, falling blocks and others that have the potential to move in some way,
+  you will have to define manually.
 
 
 --- Supported Gameplay Mechanics ---
 
 - anything with a static spinner hitbox, spikes and lightning
 - Wind and wind triggers
-- Dodging or bouncing off walls. Block entities work but have to be defined manually.
+- Dodging or bouncing off walls. Tile entities explained in Custom Hitboxes section.
 - Jumpthroughs
 - Correct physics with room bounds
+
+
+If you have questions that aren't explained anywhere in this guide, feel free to ping TheRoboMan on the celeste discord.

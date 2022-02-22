@@ -29,16 +29,19 @@ namespace Featherline
 
         private bool Validate()
         {
+            bool wasFirstOrLast = false;
             if (i == 0) {
                 if (target[i] < 1) target[i] = 1;
                 else RightFix();
+                wasFirstOrLast = true;
             }
-            else if (i == target.Length - 1) {
+            if (i == target.Length - 1) {
                 int cap = GAManager.settings.Framecount - 1;
                 if (target[i] > cap) target[i] = cap;
                 else LeftFix();
+                wasFirstOrLast = true;
             }
-            else {
+            if (!wasFirstOrLast) {
                 LeftFix();
                 RightFix();
             }

@@ -1,10 +1,6 @@
 ﻿using System.IO;
 using System.Xml.Serialization;
-using System.Collections.Generic;
-using System.Windows.Forms;
 using System;
-using System.Text.RegularExpressions;
-using System.Linq;
 
 namespace Featherline
 {
@@ -22,32 +18,33 @@ namespace Featherline
             }
 
             num_framecount.Value = settings.Framecount;
-            num_population.Value = settings.Population;
+            population.Value = settings.Population;
+            genSurvivors.Value = settings.SurvivorCount;
             num_generations.Value = settings.Generations;
-            num_survivorCount.Value = settings.SurvivorCount;
             num_population_ValueChanged(null, null);
 
-            num_mutationMagnitude.Value = (decimal)settings.MutationMagnitude;
-            num_mutChangeCount.Value = settings.MaxMutChangeCount;
+            mutMagnitude.Value = (decimal)settings.MutationMagnitude;
+            maxMutations.Value = settings.MaxMutChangeCount;
 
             txt_infoFile.Text = settings.InfoFile;
             txt_initSolution.Text = settings.Favorite;
 
-            txt_customSpinners.Text = settings.CustomSpinnerNames;
+            //txt_customSpinners.Text = settings.CustomSpinnerNames;
 
-            cbx_avoidWalls.Checked = settings.AvoidWalls;
-            cbx_enableSteepTurns.Checked = settings.EnableSteepTurns;
+            disallowWallCollisionToolStripMenuItem.Checked = settings.AvoidWalls;
 
             txt_customHitboxes.Lines = settings.ManualHitboxes;
             txt_checkpoints.Lines = settings.Checkpoints;
 
             cbx_timingTestFavDirectly.Checked = settings.TimingTestFavDirectly;
-            cbx_frameBasedOnly.Checked = settings.FrameBasedOnly;
+            frameGenesOnlyToolStripMenuItem.Checked = settings.FrameBasedOnly;
             num_gensPerTiming.Value = settings.GensPerTiming;
 
             num_shuffleCount.Value = settings.ShuffleCount;
 
-            num_maxThreadCount.Value = settings.MaxThreadCount;
+            threadCount.Value = settings.MaxThreadCount;
+
+            logAlgorithmResultsToolStripMenuItem.Checked = settings.LogResults;
         }
 
         public void SaveSettings()
@@ -57,36 +54,35 @@ namespace Featherline
             settings.Favorite = txt_initSolution?.Text ?? null;
 
             settings.Generations = (int)num_generations.Value;
-            settings.Population = (int)num_population.Value;
-            settings.SurvivorCount = (int)num_survivorCount.Value;
+            settings.Population = (int)population.Value;
+            settings.SurvivorCount = (int)genSurvivors.Value;
             settings.Framecount = (int)num_framecount.Value;
 
-            settings.MutationMagnitude = (float)num_mutationMagnitude.Value;
-            settings.MaxMutChangeCount = (int)num_mutChangeCount.Value;
+            settings.MutationMagnitude = (float)mutMagnitude.Value;
+            settings.MaxMutChangeCount = (int)maxMutations.Value;
 
-            settings.CustomSpinnerNames = txt_customSpinners.Text;
-
-            settings.AvoidWalls = cbx_avoidWalls.Checked;
-            settings.EnableSteepTurns = cbx_enableSteepTurns.Checked;
+            settings.AvoidWalls = disallowWallCollisionToolStripMenuItem.Checked;
 
             settings.ManualHitboxes = txt_customHitboxes.Lines;
             settings.Checkpoints = txt_checkpoints.Lines;
 
             settings.TimingTestFavDirectly = cbx_timingTestFavDirectly.Checked;
-            settings.FrameBasedOnly = cbx_frameBasedOnly.Checked;
+            settings.FrameBasedOnly = frameGenesOnlyToolStripMenuItem.Checked;
             settings.GensPerTiming = (int)num_gensPerTiming.Value;
 
             settings.ShuffleCount = (int)num_shuffleCount.Value;
 
-            settings.MaxThreadCount = (int)num_maxThreadCount.Value;
+            settings.MaxThreadCount = (int)threadCount.Value;
+
+            settings.LogResults = logAlgorithmResultsToolStripMenuItem.Checked;
 
             // reset the config file and serialize
             configFile.SetLength(0);
             new XmlSerializer(typeof(Settings)).Serialize(configFile, settings);
         }
 
-        private string GetCustomSpinnerNames() => Regex.Matches(txt_customSpinners.Text, @"\S+")
-            .Aggregate("", (res, m) => res + $"{{{m.Value}.Position}}");
+        /*private string GetCustomSpinnerNames() => Regex.Matches(txt_customSpinners.Text, @"\S+")
+            .Aggregate("", (res, m) => res + $"{{{m.Value}.Position}}");*/
     }
 
     public class Settings
@@ -97,12 +93,8 @@ namespace Featherline
         public int Framecount = 120;
 
         public int Population = 50;
-        public int Generations = 5000;
+        public int Generations = 3000;
         public int SurvivorCount = 20;
-
-        public float CrossoverProbability = 1;
-        public float MutationProbability = 2;
-        public float SimplificationProbability = 1;
 
         public float MutationMagnitude = 8;
         public int MaxMutChangeCount = 5;
@@ -112,7 +104,7 @@ namespace Featherline
         public string CustomSpinnerNames;
 
         public bool AvoidWalls = true;
-        public bool EnableSteepTurns = false;
+        //public bool EnableSteepTurns = false;
 
         public string[] ManualHitboxes;
 
@@ -123,6 +115,11 @@ namespace Featherline
         public int ShuffleCount = 2;
 
         public int MaxThreadCount;
+
+        public bool LogResults = true;
+
+        public bool ComputeHazards;
+        public bool ComputeCollision;
 
         public Settings Copy() => (Settings)MemberwiseClone();
 

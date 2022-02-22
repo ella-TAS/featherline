@@ -21,11 +21,35 @@ namespace Featherline
 			cleaningInputs = false;
 
 			LoadSavestate(Level.StartState);
-
+			int prevCPs = 0;
+			int prevBoops = 0;
+			bool cpNotify = true;
 			while (si.f < ind.Length) {
 				RunFrame(ind[si.f]);
 				si.Print();
-				if (stop) si.checkpointsGotten = 0;
+
+				if (wallboops.Count() > prevBoops)
+					Console.WriteLine("Collided with a wall.");
+
+				if (si.checkpointsGotten > prevCPs) {
+					if (si.checkpointsGotten >= Level.Checkpoints.Length) {
+						stop = false;
+						if (cpNotify)
+							Console.WriteLine("Finish checkpoint collected.");
+						si.checkpointsGotten = 0;
+						cpNotify = false;
+					}
+					else if (cpNotify)
+						Console.WriteLine($"Collected checkpoint {si.checkpointsGotten}.");
+				}
+
+				if (stop) {
+					Console.WriteLine("Died.");
+					stop = false;
+				}
+
+				prevCPs = si.checkpointsGotten;
+				prevBoops = wallboops.Count();
 			}
 		}
 
@@ -62,7 +86,7 @@ namespace Featherline
 			int cpExtras = si.checkpointsGotten * 10000;
 			if (si.checkpointsGotten >= Level.Checkpoints.Length) {
 				si.checkpointsGotten--;
-				double nextCpDist = Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(si.pos, si.previousPos, out bool touched);
+				double nextCpDist = Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(si.ExactPosition, si.previousPos, out bool touched);
 
 				// prevents a small bug where the sim got the checkpoint according to intPos collision but not with final cp dist check,
 				// making the result 0 instead of 3 + 1/6 pixels that it should be
@@ -81,7 +105,7 @@ namespace Featherline
 
 		private void RunFrame(float aim)
 		{
-			si.previousPos = si.pos;
+			si.previousPos = si.ExactPosition;
 
 			InputCleaning();
 
@@ -106,7 +130,7 @@ namespace Featherline
 			var dist = si.GetDistToNextCp();
 			fitEval = dist < fitEval.closestDist ? (dist, si.f) : fitEval;
 
-			if (Level.Checkpoints[si.checkpointsGotten].TouchingAsFeather(si.intPos)) {
+			if (Level.Checkpoints[si.checkpointsGotten].TouchingAsFeather(si.pos)) {
 				si.checkpointsGotten++;
 				if (si.checkpointsGotten >= Level.Checkpoints.Length)
 					stop = true;
@@ -175,16 +199,21 @@ namespace Featherline
 			si = ss.fState;
 		}
 
-		public static Vector2 RotateTowards(Vector2 vec, float targetAngleRadians, float maxMoveRadians) =>
-			Vector2.AngleToVector(AngleApproach(vec.Angle(), targetAngleRadians, maxMoveRadians), vec.Length());
+		const float MaxMove = 5.5850534f * DeltaTime;
+		public static Vector2 RotateTowards(Vector2 vec, float target)
+		{
+			float orig = vec.Angle();
+			float diff = target - orig;
+			diff = diff > 3.1415927f ? diff - 6.2831855f : diff <= -3.1415927f ? diff + 6.2831855f : diff;
+			float resAngle = Math.Abs(diff) < MaxMove ? target : orig + (diff > 0 ? MaxMove : -MaxMove);
+			float len = (float)Math.Sqrt(vec.X * vec.X + vec.Y * vec.Y);
+			return new Vector2((float)Math.Cos(resAngle) * len, (float)Math.Sin(resAngle) * len);
+		}
 
 		public static float AngleDiff(float radiansA, float radiansB)
 		{
-			float num;
-			for (num = radiansB - radiansA; num > 3.1415927f; num -= 6.2831855f) { }
-			while (num <= -3.1415927f)
-				num += 6.2831855f;
-			return num;
+			float d = radiansB - radiansA;
+			return d > 3.1415927f ? d - 6.2831855f : d <= -3.1415927f ? d + 6.2831855f : d;
 		}
 
 		public static float DegreesDiff(float actual, float target)
@@ -192,14 +221,6 @@ namespace Featherline
 			float v1 = target - actual;
 			float v2 = v1 > 0 ? v1 - 360 : 360f + v1;
 			return Math.Abs(v1) < Math.Abs(v2) ? v1 : v2;
-		}
-
-		public static float AngleApproach(float val, float target, float maxMove)
-		{
-			float value = AngleDiff(val, target);
-			if (Math.Abs(value) < maxMove)
-				return target;
-			return val + Clamp(value, -maxMove, maxMove);
 		}
 
 		public static float Clamp(float value, float min, float max)
@@ -220,31 +241,28 @@ namespace Featherline
 		// refactored StarFlyUpdate()
 		private void UpdateAngle()
 		{
-			Vector2 vector = si.spd.NormalizeAndCopy();
-			vector = RotateTowards(vector, si.aim.Angle, 5.5850534f * DeltaTime); // 5.33334 degrees
-
-			object a = "abc";
-			object b = 10;
+			float spdLen = (float)Math.Sqrt(si.spd.X * si.spd.X + si.spd.Y * si.spd.Y);
+			float inverse = 1f / spdLen;
+			var normalized = new Vector2(si.spd.X * inverse, si.spd.Y * inverse);
+			normalized = RotateTowards(normalized, si.aim.Angle); // 5.33334 degrees
 
 			// curving and speed acceleration
 			float target;
-			if (!sett.EnableSteepTurns || Vector2.Dot(vector, si.aim.Value) >= .45f) // angle after rotating < acos(.45)
-			{
-				si.speedLerp = Approach(si.speedLerp, 1f, DeltaTime / 1f);
-				target = Lerp(140f, 190f, si.speedLerp);
-			}
-			else { // don't go here
-				si.speedLerp = 0f;
-				target = 140f; // approach 140 speed
-			}
+			//if (!sett.EnableSteepTurns || Vector2.Dot(vector, si.aim.Value) >= .45f) // angle after rotating < acos(.45)
+			//{
+				si.lerp += DeltaTime;
+				si.lerp = si.lerp < 1f ? si.lerp : 1f;
+				target = 140f + (190f - 140f) * si.lerp;
+			//}
+			//else { // don't go here
+			//si.speedLerp = 0f;
+			//target = 140f; // approach 140 speed
+			//}
 
 			// update speed
-			float num = si.spd.Length();
-			num = Approach(num, target, 1000f * DeltaTime);
-			si.spd = vector * num;
+			spdLen = Approach(spdLen, target, 1000f * DeltaTime);
+			si.spd = normalized * spdLen;
 		}
-
-
 
 		// for input cleanup
 		private enum TurnState
@@ -260,51 +278,70 @@ namespace Featherline
 	public class FeatherState
 	{
 		public int f = 0;
-		public float speedLerp = 0f;
+		public float lerp = 0f;
 
-		public Vector2 pos;
+		public Vector2 moveCounter;
 		public Vector2 previousPos;
 		public Aim aim;
 		public Vector2 spd;
 
 		public int checkpointsGotten = 0;
 
-		public IntVec2 intPos = new IntVec2();
-		public void UpdateIntPos()
+		public IntVec2 pos = new IntVec2();
+
+		public void MoveH()
+        {
+			int increment = moveCounter.X > 0 ? 1 : -1;
+			int count = (int)Math.Round(moveCounter.X);
+			count = count > 0 ? count : -count;
+			for (int i = 0; i < count; i++) {
+				moveCounter.X -= increment;
+				pos.X += increment;
+            }
+        }
+
+		public void MoveV()
 		{
-			intPos.X = (int)Math.Round(pos.X);
-			intPos.Y = (int)Math.Round(pos.Y);
+			int increment = moveCounter.Y > 0 ? 1 : -1;
+			int count = (int)Math.Round(moveCounter.Y);
+			count = count > 0 ? count : -count;
+			for (int i = 0; i < count; i++) {
+				moveCounter.Y -= increment;
+				pos.Y += increment;
+			}
 		}
+
+		public Vector2 ExactPosition => pos + moveCounter;
 
 		public FeatherState Copy()
 		{
 			return new FeatherState() {
 				f = f,
-				speedLerp = speedLerp,
-				pos = pos,
+				lerp = lerp,
+				moveCounter = moveCounter,
 				aim = aim,
 				spd = spd,
 				checkpointsGotten = checkpointsGotten,
-				intPos = new IntVec2(intPos.X, intPos.Y)
+				pos = new IntVec2(pos.X, pos.Y)
 			};
 		}
 
 		public double GetDistToNextCp() =>
 			checkpointsGotten == Level.Checkpoints.Length - 1
-			? Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos, previousPos, out _)
+			? Level.Checkpoints[Level.Checkpoints.Length - 1].GetFinalCPDistance(pos + moveCounter, previousPos, out _)
 			: Math.Sqrt(
 				Math.Pow(Level.Checkpoints[checkpointsGotten].center.X - pos.X, 2)
 			  + Math.Pow(Level.Checkpoints[checkpointsGotten].center.Y - pos.Y, 2));
 
 		public void Print()
 		{
-			Console.Write($"f{f}, pos {pos}, ");
+			Console.Write($"f{f}, pos {ExactPosition}, ");
 			Console.ForegroundColor = ConsoleColor.Blue;
 			Console.Write($"spd {spd}, ");
 			Console.ForegroundColor = ConsoleColor.Yellow;
 			Console.Write($"angle {spd.TASAngle}, ");
 			Console.ForegroundColor = ConsoleColor.Green;
-			Console.Write($"lerp {speedLerp}, ");
+			Console.Write($"lerp {lerp}, ");
 			Console.ForegroundColor = ConsoleColor.Red;
 			Console.WriteLine($"aim {aim}");
 			Console.ForegroundColor = ConsoleColor.White;

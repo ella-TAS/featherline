@@ -1,12 +1,10 @@
-using System;
-using System.Windows.Forms;
 using System.Globalization;
 
 namespace Featherline
 {
     public static class Program
     {
-        public static Form1 mainForm;
+        public static Form1? mainForm;
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>

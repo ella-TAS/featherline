@@ -1,8 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-using System;
-using static System.ConsoleColor;
-using System.Windows.Forms;
+﻿using static System.ConsoleColor;
 
 namespace Featherline
 {
@@ -135,8 +131,8 @@ namespace Featherline
 
             WriteColor($"\nBest fitness of this phase was {best.ind.fitness.FitnessFormat()} with these inputs:\n\n", Yellow);
             var inputs = best.ind.ToFrameGenes(settings.Framecount, best.timings);
-            new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
-            Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount) + "\n");
+            new FeatherSim(settings).AddInputCleaner(false).SimulateIndivitual(inputs).Evaluate(out _, out int fCount);
+            Console.WriteLine(inputs.ToString(fCount) + "\n");
         }
 
         bool perfecting = false;
@@ -410,7 +406,7 @@ namespace Featherline
 
         // a line is useless if you can set its angle to the angle of the line after it,
         // and you dont die or miss a checkpoint during either of those two lines
-        private void RemoveUnnecessaryLinesUsingSim()
+        private void RemoveUnnecessaryLinesUsingSim(bool keepExact = false)
         {
             var anglesBackup = best.ind.angles.Clone();
 
@@ -441,7 +437,8 @@ namespace Featherline
                     !dead
                     && timingStates[i] != null
                     && state.fState.checkpointsGotten == timingStates[i].fState.checkpointsGotten
-                    && ValidWallboops(wallboops, boops, new IntRange(0, i == best.timings.Length ? settings.Framecount : best.timings[i]));
+                    && ValidWallboops(wallboops, boops, new IntRange(0, i == best.timings.Length ? settings.Framecount : best.timings[i]))
+                    && (!keepExact || state.fState.ExactPosition == timingStates[i].fState.ExactPosition);
             }
 
             var timings = best.timings.ToList();
@@ -565,8 +562,8 @@ namespace Featherline
 
             WriteColor($"\nBest inputs of the first phase were:\n\n", Yellow);
             var inputs = ind.genes;
-            new FeatherSim(settings).SimulateIndivitual(inputs, true).Evaluate(out _, out int fCount);
-            Console.WriteLine(GAManager.FrameGenesToString(inputs, fCount));
+            new FeatherSim(settings).SimulateIndivitual(inputs).AddInputCleaner(true).Evaluate(out _, out int fCount);
+            Console.WriteLine(inputs.ToString(fCount));
 
             SavedTiming.sett = settings;
 
@@ -574,7 +571,7 @@ namespace Featherline
             var simplified = SimplifyFrameGenes(ind.genes);
             //Console.WriteLine("\n" + GAManager.FrameGenesToString(simplified));
 
-            SetUpFirstIndividual(simplified);
+            best = GenesToRawLineInd(simplified);
 
             SourceFrameIndFitness = ind.fitness;
         }
@@ -585,31 +582,52 @@ namespace Featherline
 
             var inputs = GAManager.RawFavorite(favorite);
             settings.Framecount = Math.Max(inputs.Length, settings.Framecount);
-            
-            new FeatherSim(settings).SimulateIndivitual(inputs)
-                .Evaluate(out SourceFrameIndFitness, out _);
+
+            var sim = new FeatherSim(settings);
+            AnglePerfector.baseInfo = sim.GetAllFrameData(inputs, out AnglePerfector.baseInfoFinishes, out AnglePerfector.baseInfoWallboops);
+            sim.Evaluate(out AnglePerfector.baseInfoFitness, out _);
 
             SavedTiming.sett = settings;
 
-            SetUpFirstIndividual(inputs);
+            best = GenesToRawLineInd(inputs);
+            RemoveUnnecessaryLinesUsingSim(true);
+
+            sim = new FeatherSim(settings);
+            AnglePerfector.baseInfo = sim.GetAllFrameData(best.inputs, out AnglePerfector.baseInfoFinishes, out AnglePerfector.baseInfoWallboops);
+            sim.Evaluate(out AnglePerfector.baseInfoFitness, out _);
+            var test = 1;
         }
 
-        private void SetUpFirstIndividual(AngleSet frames)
+        private SavedTiming GenesToRawLineInd(AngleSet inputs)
         {
             var anglesLs = new List<float>();
-            var timingsLs = new List<int>();
+            var timingLs = new List<int>();
 
-            float currentAngle = frames[0];
-            for (int i = 1; i < frames.Length; i++) {
-                if (frames[i] != currentAngle) {
-                    anglesLs.Add(currentAngle);
-                    timingsLs.Add(i);
-                    currentAngle = frames[i];
-                }
+            int lastTiming = 0;
+            foreach (var line in inputs.GroupConsecutive()) {
+                anglesLs.Add(line.value);
+                lastTiming += line.count;
+                timingLs.Add(lastTiming);
             }
-            anglesLs.Add(currentAngle);
+            timingLs.RemoveAt(timingLs.Count - 1);
 
-            best = new SavedTiming(new AngleSet(anglesLs.ToArray()), new AngleSet(timingsLs.Count), timingsLs.ToArray());
+            var borderLs = new List<float>();
+            borderLs.Add(0f);
+            for (int i = 1; i < timingLs.Count; i++) {
+                if (timingLs[i] - timingLs[i - 1] == 1) {
+                    var diff = anglesLs[i] - anglesLs[i - 1];
+                    var diff2 = anglesLs[i + 1] - anglesLs[i - 1];
+                    if (Math.Abs(diff) < 5.333f && Math.Abs(diff2) > 5.334f && (diff < 0) == (diff2 < 0)) {
+                        anglesLs.RemoveAt(i);
+                        borderLs[--i] = Math.Abs(diff);
+                        timingLs.RemoveAt(i);
+                        continue;
+                    }
+                }
+                borderLs.Add(0f);
+            }
+
+            return new SavedTiming(new AngleSet(anglesLs), new AngleSet(borderLs), timingLs.ToArray());
         }
 
         #endregion

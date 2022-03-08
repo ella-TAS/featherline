@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System;
-using static System.Math;
+﻿using static System.Math;
 using static Featherline.GAManager;
 
 namespace Featherline
@@ -41,9 +39,8 @@ namespace Featherline
 
             void DoSim(int i)
             {
-                var sim = new FeatherSim(sett);
-                sim.SimulateIndivitual(inds[i].genes, true, upToFrame, inds[i].SkippingState);
-                sim.Evaluate(out var fitness, out int frames);
+                new FeatherSim(sett).AddInputCleaner(true).SimulateIndivitual(inds[i].genes, upToFrame, inds[i].SkippingState)
+                    .Evaluate(out var fitness, out int frames);
                 inds[i].fitness = fitness;
                 shortestFrameCount = Min(shortestFrameCount, frames);
             }
@@ -185,7 +182,7 @@ namespace Featherline
             if (favorite == null)
                 foreach (var ind in inds) {
                     var sim = new FeatherSim(sett);
-                    sim.SimulateIndivitual(ind.genes, false, upToFrame);
+                    sim.SimulateIndivitual(ind.genes, upToFrame);
                     sim.Evaluate(out var fitness, out _);
                     ind.fitness = fitness;
                 }
@@ -245,7 +242,7 @@ namespace Featherline
             void DoSim(int i)
             {
                 var sim = new FeatherSim(sett);
-                sim.SimulateIndivitual(inds[i].ToFrameGenes(indLength, timings), false, runToFrame, inds[i].SkippingState);
+                sim.SimulateIndivitual(inds[i].ToFrameGenes(indLength, timings), runToFrame, inds[i].SkippingState);
                 sim.Evaluate(out var fitness, out _);
                 inds[i].fitness = fitness;
             }

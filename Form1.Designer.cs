@@ -29,7 +29,6 @@ namespace Featherline
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.btn_beginAlg = new System.Windows.Forms.Button();
             this.btn_selectInfoFile = new System.Windows.Forms.Button();
             this.txt_infoFile = new System.Windows.Forms.TextBox();
@@ -44,8 +43,10 @@ namespace Featherline
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.AutoSetInfoTemplate = new System.Windows.Forms.ToolStripMenuItem();
             this.infoTemplateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setupTASSnippetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.returnToOldTemplateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.logFlightOfInitialInputsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.extraToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -224,25 +225,41 @@ namespace Featherline
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.AutoSetInfoTemplate,
             this.infoTemplateToolStripMenuItem,
-            this.setupTASSnippetToolStripMenuItem});
+            this.setupTASSnippetToolStripMenuItem,
+            this.returnToOldTemplateToolStripMenuItem});
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
-            this.copyToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
-            this.copyToolStripMenuItem.Text = "Copy";
+            this.copyToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
+            this.copyToolStripMenuItem.Text = "Setup";
+            // 
+            // AutoSetInfoTemplate
+            // 
+            this.AutoSetInfoTemplate.Name = "AutoSetInfoTemplate";
+            this.AutoSetInfoTemplate.Size = new System.Drawing.Size(216, 22);
+            this.AutoSetInfoTemplate.Text = "Auto Set Info Template";
+            this.AutoSetInfoTemplate.Click += new System.EventHandler(this.AutoSetInfoTemplate_Click);
             // 
             // infoTemplateToolStripMenuItem
             // 
             this.infoTemplateToolStripMenuItem.Name = "infoTemplateToolStripMenuItem";
-            this.infoTemplateToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.infoTemplateToolStripMenuItem.Text = "Info Template";
+            this.infoTemplateToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            this.infoTemplateToolStripMenuItem.Text = "Copy Info Template";
             this.infoTemplateToolStripMenuItem.Click += new System.EventHandler(this.infoTemplateToolStripMenuItem_Click);
             // 
             // setupTASSnippetToolStripMenuItem
             // 
             this.setupTASSnippetToolStripMenuItem.Name = "setupTASSnippetToolStripMenuItem";
-            this.setupTASSnippetToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
-            this.setupTASSnippetToolStripMenuItem.Text = "Info Logging Snippet";
+            this.setupTASSnippetToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            this.setupTASSnippetToolStripMenuItem.Text = "Copy Info Logging Snippet";
             this.setupTASSnippetToolStripMenuItem.Click += new System.EventHandler(this.setupTASSnippetToolStripMenuItem_Click);
+            // 
+            // returnToOldTemplateToolStripMenuItem
+            // 
+            this.returnToOldTemplateToolStripMenuItem.Name = "returnToOldTemplateToolStripMenuItem";
+            this.returnToOldTemplateToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            this.returnToOldTemplateToolStripMenuItem.Text = "Return To Old Template";
+            this.returnToOldTemplateToolStripMenuItem.Click += new System.EventHandler(this.returnToOldTemplateToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
@@ -367,6 +384,7 @@ namespace Featherline
             // 
             // txt_checkpoints
             // 
+            this.txt_checkpoints.DetectUrls = false;
             this.txt_checkpoints.Location = new System.Drawing.Point(12, 103);
             this.txt_checkpoints.Name = "txt_checkpoints";
             this.txt_checkpoints.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
@@ -538,6 +556,9 @@ namespace Featherline
         private System.Windows.Forms.ToolStripMenuItem disallowWallCollisionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem simulationThreadCountToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem logAlgorithmResultsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem AutoSetInfoTemplate;
+        private System.Windows.Forms.ToolStripMenuItem returnToOldTemplateToolStripMenuItem;
+        private System.Windows.Forms.StatusStrip statusStrip;
     }
 }
 

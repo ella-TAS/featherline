@@ -1,25 +1,19 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿namespace Featherline;
 
-namespace Featherline
+static class MyParallel
 {
-    static class MyParallel
+    public static Action<int, int, Action<int>>? Run;
+
+    public static void Initialize(Settings sett)
     {
-        public static Action<int, int, Action<int>> Run;
+        var opt = new ParallelOptions() { MaxDegreeOfParallelism = sett.MaxThreadCount };
 
-        public static void Initialize(Settings sett)
+        Run = sett.MaxThreadCount == 1 ? NonParallel : (start, to, Act) => Parallel.For(start, to, opt, Act);
+
+        void NonParallel(int start, int to, Action<int> Act)
         {
-            var opt = new ParallelOptions() { MaxDegreeOfParallelism = sett.MaxThreadCount };
-
-            Run = sett.MaxThreadCount == 1
-                ? (Action<int, int, Action<int>>)NonParallel
-                : (start, to, Act) => Parallel.For(start, to, opt, Act);
-
-            void NonParallel(int start, int to, Action<int> Act)
-            {
-                for (int i = start; i < to; i++)
-                    Act(i);
-            }
+            for (int i = start; i < to; i++)
+                Act(i);
         }
     }
 }

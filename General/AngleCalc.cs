@@ -2,7 +2,7 @@
 
 namespace Featherline;
 
-static class PreCalc
+static class AngleCalc
 {
     public static float ToBounds(this float val) => (val + Revolution) % Revolution;
     public static double ToBounds(this double val) => (val + Revolution) % Revolution;

@@ -1,4 +1,5 @@
-This project is now merged into Celeste Studio at https://github.com/EverestAPI/CelesteTAS-EverestInterop
+This project is now merged into Celeste Studio at https://github.com/EverestAPI/CelesteTAS-EverestInterop.
+
 If you want to make changes, contribute into that project instead of this one.
 
 # featherline
